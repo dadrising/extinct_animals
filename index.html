@@ -544,8 +544,9 @@
             cat === 'all' ? renderGallery(animals) : renderGallery(animals.filter(a => a.category === cat));
         }
 
-        // 2. CHARTS (Simplified for brevity, logic remains similar)
+        // 2. CHARTS (Including New Emoji Scatter)
         function initCharts() {
+            // A. Weight Bar Chart
             const top5 = [...animals].sort((a,b) => b.size - a.size).slice(0, 5);
             new Chart(document.getElementById('weightChart'), {
                 type: 'bar',
@@ -556,6 +557,7 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false}}, scales:{y:{title:{display:true, text:'Тонни'}}} }
             });
 
+            // B. Diet Doughnut
             let diets = {veg:0, meat:0}; animals.forEach(a => a.diet.includes("Траво") ? diets.veg++ : diets.meat++);
             new Chart(document.getElementById('dietChart'), {
                 type: 'doughnut',
@@ -565,7 +567,7 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins:{legend:{position:'bottom'}} }
             });
-
+        }
             // C. EMOJI SCATTER CHART (Replaces Plotly)
             const ctxEmoji = document.getElementById('emojiTimelineChart').getContext('2d');
             
