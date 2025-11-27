@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Втрачений Світ: Велика Енциклопедія та Гра</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Chosen Palette: Deep Jungle & Bright Learning Accents -->
+    <!-- Application Structure Plan: 
+         1. Hero: Engaging introduction.
+         2. Gallery: 20 animals with FIXED image links.
+         3. Data Lab: Interactive charts for comparison.
+         4. Quiz: COMPLETELY REVAMPED. 20 dynamic questions with explanations for every single answer choice.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Light green background */
+            color: #064e3b; /* Dark green text */
+        }
+        h1, h2, h3, .fun-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Card Image Styling */
+        .card-img-container {
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+            background-color: #e5e7eb;
+        }
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .card-hover:hover .card-img-container img {
+            transform: scale(1.1);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        /* Buttons */
+        .btn-primary {
+            background-color: #059669; /* Emerald-600 */
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #047857;
+        }
+        /* Filters */
+        .filter-active {
+            background-color: #064e3b !important;
+            color: white !important;
+        }
+        /* Quiz Styles */
+        .quiz-option {
+            transition: all 0.2s;
+        }
+        .quiz-option:hover:not(.disabled) {
+            background-color: #d1fae5; /* Green-100 */
+            transform: scale(1.02);
+        }
+        .quiz-correct { background-color: #86efac !important; border-color: #22c55e !important; } /* Green-300 */
+        .quiz-wrong { background-color: #fca5a5 !important; border-color: #ef4444 !important; } /* Red-300 */
+        .disabled { pointer-events: none; opacity: 0.8; }
+        
+        .chart-container { position: relative; width: 100%; height: 350px; }
+        .hidden-content { display: none; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #f0fdf4; }
+        ::-webkit-scrollbar-thumb { background: #059669; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navbar -->
+    <nav class="bg-[#064e3b] text-emerald-50 sticky top-0 z-50 shadow-lg border-b-4 border-[#047857]">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-2xl font-black tracking-wide flex items-center gap-2 fun-font">
+                🦕 Диво-Парк Історії
+            </div>
+            <div class="hidden md:flex space-x-4 font-bold text-sm uppercase tracking-wider">
+                <button onclick="scrollToSection('gallery')" class="hover:text-yellow-300 transition py-2 px-4 rounded-lg hover:bg-[#047857]">Тварини</button>
+                <button onclick="scrollToSection('datalab')" class="hover:text-yellow-300 transition py-2 px-4 rounded-lg hover:bg-[#047857]">Рекорди</button>
+                <button onclick="scrollToSection('quiz-section')" class="bg-yellow-400 text-[#064e3b] py-2 px-4 rounded-lg hover:bg-yellow-300 transition shadow-md animate-pulse">Грати!</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="container mx-auto px-4 py-12 md:py-20 text-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
+        <h1 class="text-5xl md:text-7xl font-black text-[#064e3b] mb-6 drop-shadow-sm">
+            Де Вони <span class="text-emerald-500">Зникли?</span>
+        </h1>
+        <p class="text-xl text-[#065f46] max-w-2xl mx-auto mb-8 font-bold leading-relaxed">
+            Привіт, досліднице! 🕵️‍♀️ Готова до великої пригоди? Ми вирушаємо в минуле, щоб побачити 20 дивовижних тварин, яких більше немає на Землі. А потім перевіримо твої знання у великій грі!
+        </p>
+        <button onclick="scrollToSection('gallery')" class="btn-primary px-10 py-4 rounded-full text-2xl font-black shadow-xl transform transition hover:scale-105 border-b-4 border-[#064e3b]">
+            Почати Експедицію 🚀
+        </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 space-y-24 pb-20">
+
+        <!-- GALLERY SECTION -->
+        <section id="gallery">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-black text-[#064e3b] mb-4">📸 Енциклопедія (20 Тварин)</h2>
+                <p class="text-lg text-[#065f46] mb-6">Всі зображення виправлено! Натисни на картку, щоб роздивитися.</p>
+                
+                <div class="flex flex-wrap justify-center gap-3">
+                    <button onclick="filterAnimals('all')" class="filter-btn filter-active px-6 py-2 rounded-full bg-white text-[#064e3b] font-bold shadow-md border-2 border-transparent hover:border-emerald-500 transition">Всі разом</button>
+                    <button onclick="filterAnimals('dino')" class="filter-btn px-6 py-2 rounded-full bg-white text-orange-600 font-bold shadow-md border-2 border-transparent hover:border-orange-500 transition">🦖 Динозаври</button>
+                    <button onclick="filterAnimals('ice')" class="filter-btn px-6 py-2 rounded-full bg-white text-blue-600 font-bold shadow-md border-2 border-transparent hover:border-blue-500 transition">❄️ Льодовиковий період</button>
+                    <button onclick="filterAnimals('recent')" class="filter-btn px-6 py-2 rounded-full bg-white text-red-600 font-bold shadow-md border-2 border-transparent hover:border-red-500 transition">😢 Зникли недавно</button>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div id="animal-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Javascript will populate this -->
+            </div>
+        </section>
+
+        <!-- DATA LAB SECTION -->
+        <section id="datalab" class="bg-white p-6 md:p-10 rounded-[3rem] shadow-xl border-2 border-emerald-100">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-black text-[#064e3b]">📊 Лабораторія Фактів</h2>
+                <p class="mt-2 text-xl text-gray-600">Давай порівняємо наших гігантів!</p>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                <!-- Charts (Same as before, logic included below) -->
+                <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-blue-900">🐘 Топ-5 Найважчих (Тонни)</h3>
+                    <div class="chart-container"><canvas id="weightChart"></canvas></div>
+                </div>
+                <div class="bg-green-50 p-6 rounded-3xl border border-green-100">
+                    <h3 class="text-2xl font-bold mb-4 text-center text-green-900">🥗 Меню (Хто що їв)</h3>
+                    <div class="chart-container"><canvas id="dietChart"></canvas></div>
+                </div>
+                <div class="col-span-1 xl:col-span-2 bg-orange-50 p-6 rounded-3xl border border-orange-100">
+                    <h3 class="text-2xl font-bold mb-2 text-center text-orange-900">⏳ Стрічка Часу та Розмірів</h3>
+                    <p class="text-center mb-4 text-sm">Зліва - давно, Справа - недавно. Розмір бульбашки = розмір тварини.</p>
+                    <div class="chart-container w-full" style="height: 450px;"><div id="timelinePlot"></div></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NEW QUIZ SECTION (20 Questions with Explanations) -->
+        <section id="quiz-section" class="max-w-4xl mx-auto">
+            <div class="bg-gradient-to-b from-[#064e3b] to-[#047857] p-1 rounded-[2.5rem] shadow-2xl">
+                <div class="bg-[#f0fdf4] p-8 md:p-12 rounded-[2.3rem]">
+                    
+                    <div class="text-center mb-8">
+                        <h2 class="text-4xl font-black text-[#064e3b] mb-2 fun-font">🧠 Велика Вікторина!</h2>
+                        <p class="text-lg text-[#065f46]">20 питань. Чи зможеш ти відповісти на всі?</p>
+                    </div>
+
+                    <!-- Quiz Game Container -->
+                    <div id="quiz-game-area" class="bg-white p-6 rounded-2xl shadow-inner border-2 border-emerald-50">
+                        
+                        <!-- Progress Bar -->
+                        <div class="flex justify-between items-center mb-6 text-sm font-bold text-gray-500">
+                            <span id="question-counter">Питання 1 з 20</span>
+                            <span id="score-counter" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Бали: 0</span>
+                        </div>
+
+                        <!-- Question Text -->
+                        <h3 id="question-text" class="text-2xl font-bold text-[#064e3b] mb-8 min-h-[64px]">
+                            Завантаження питання...
+                        </h3>
+
+                        <!-- Options Buttons -->
+                        <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <!-- Buttons will be inserted here by JS -->
+                        </div>
+
+                        <!-- Feedback / Explanation Area (Crucial addition) -->
+                        <div id="feedback-area" class="hidden-content bg-gray-50 p-5 rounded-xl border-l-4 mb-6 transition-all">
+                            <h4 id="feedback-title" class="font-bold text-lg mb-2"></h4>
+                            <p id="feedback-text" class="text-gray-700 leading-relaxed"></p>
+                        </div>
+
+                        <!-- Next Button -->
+                        <div class="text-right">
+                            <button id="next-btn" onclick="nextQuestion()" class="hidden-content bg-yellow-400 text-[#064e3b] px-8 py-3 rounded-xl font-black hover:bg-yellow-300 transition shadow-md flex items-center gap-2 ml-auto">
+                                Наступне питання 👉
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quiz Results Container (Hidden initially) -->
+                    <div id="quiz-results" class="hidden-content text-center py-10">
+                        <div class="text-7xl mb-4">🏆</div>
+                        <h3 class="text-4xl font-black text-[#064e3b] mb-4">Тест Завершено!</h3>
+                        <p class="text-2xl mb-8">Твій результат: <span id="final-score" class="font-black text-emerald-600"></span> з 20!</p>
+                        <p id="result-message" class="text-lg text-gray-600 mb-10"></p>
+                        <button onclick="startQuiz()" class="btn-primary px-10 py-4 rounded-full font-bold shadow-lg">Спробувати ще раз</button>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#064e3b] text-emerald-100 py-8 text-center">
+        <div class="container mx-auto px-4">
+            <p class="font-bold text-xl mb-2 font-pacifico">🌍 Вивчаємо минуле, щоб берегти майбутнє.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- UPDATED ANIMAL DATA (Fixed Links) ---
+        // Using stable Wikimedia Commons Thumbnail URLs
+        const animals = [
+             // DINO
+            { id: 1, name: "Тиранозавр Рекс", category: "dino", period: "66 млн років тому", size: 8000, diet: "Хижак 🥩", funFact: "Його зуб був розміром з банан!", desc: "Король динозаврів з потужними щелепами та маленькими 'ручками'.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Tyrannosaurus_Rex_Holotype.jpg/800px-Tyrannosaurus_Rex_Holotype.jpg" },
+            { id: 2, name: "Трицератопс", category: "dino", period: "66 млн років тому", size: 9000, diet: "Травоїдний 🌿", funFact: "Мав три роги і великий кістяний комір для захисту.", desc: "Схожий на носорога, але набагато більший. Воював з Т-Рексом.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Triceratops_horridus_12.jpg/800px-Triceratops_horridus_12.jpg" },
+            { id: 3, name: "Стегозавр", category: "dino", period: "150 млн років тому", size: 3000, diet: "Травоїдний 🌿", funFact: "Мав мозок розміром з волоський горіх, але був дуже великим.", desc: "Відомий своїми пластинами на спині та шипами на хвості.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Stegosaurus_ungulatus.jpg/800px-Stegosaurus_ungulatus.jpg" },
+            { id: 4, name: "Птеранодон", category: "dino", period: "85 млн років тому", size: 50, diet: "Риба 🐟", funFact: "Це не динозавр, а літаючий ящур з розмахом крил 7 метрів!", desc: "Літав над стародавніми морями і ловив рибу, як пелікан.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Pteranodon_sternbergi_amnh_02.jpg/800px-Pteranodon_sternbergi_amnh_02.jpg" },
+            { id: 5, name: "Паразауролоф", category: "dino", period: "75 млн років тому", size: 2500, diet: "Травоїдний 🌿", funFact: "Використовував свій гребінь на голові як музичну трубу.", desc: "Динозавр, який вмів гудіти, щоб спілкуватися з друзями.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Parasaurolophus_walkeri_rain.jpg/800px-Parasaurolophus_walkeri_rain.jpg" },
+            { id: 6, name: "Титанобоа", category: "dino", period: "60 млн років тому", size: 1100, diet: "Хижак 🥩", funFact: "Змія довжиною як шкільний автобус (13 метрів)!", desc: "Найбільша змія в історії. Жила в дуже жарких джунглях.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Titanoboa_cerrejonensis_life_reconstruction.jpg/800px-Titanoboa_cerrejonensis_life_reconstruction.jpg" },
+            { id: 7, name: "Мегалодон", category: "dino", period: "3 млн років тому", size: 50000, diet: "Хижак 🐟", funFact: "Його паща була настільки великою, що в ній могла б стояти людина.", desc: "Гігантська акула, яка полювала на китів у стародавніх океанах.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Carcharocles_megalodon_Baltimore_Aquarium_01.jpg/800px-Carcharocles_megalodon_Baltimore_Aquarium_01.jpg" },
+            { id: 8, name: "Археоптерикс", category: "dino", period: "150 млн років тому", size: 1, diet: "Хижак 🐛", funFact: "Напів-птах, напів-динозавр. Мав пір'я, але також зуби і довгий хвіст.", desc: "Дідусь усіх сучасних птахів. Жив на деревах.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Archaeopteryx_lithographica_%28Berlin_specimen%29.jpg/600px-Archaeopteryx_lithographica_%28Berlin_specimen%29.jpg" },
+            // ICE AGE
+            { id: 9, name: "Шерстистий Мамонт", category: "ice", period: "4 тис. років тому", size: 6000, diet: "Травоїдний 🌿", funFact: "Мав дуже довгу руду шерсть, щоб не замерзнути в льодовиковий період.", desc: "Схожий на слона в теплій шубі з величезними закрученими бивнями.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Mammuthus_primigenius_model_in_the_Brno_museum.jpg/800px-Mammuthus_primigenius_model_in_the_Brno_museum.jpg" },
+            { id: 10, name: "Смілодон (Тигр)", category: "ice", period: "10 тис. років тому", size: 400, diet: "Хижак 🥩", funFact: "Його ікла були довжиною 28 см! Вони стирчали навіть із закритого рота.", desc: "Відомий як шаблезубий тигр. Був дуже сильним і полював на велику здобич.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Smilodon_fatalis_reconstruction.jpg/800px-Smilodon_fatalis_reconstruction.jpg" },
+            { id: 11, name: "Шерстистий Носоріг", category: "ice", period: "10 тис. років тому", size: 2000, diet: "Травоїдний 🌿", funFact: "Також носив 'шубу' і мав два роги, передній був дуже великим.", desc: "Жив разом з мамонтами в холодних степах.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Coelodonta_antiquitatis_reconstruction_01.jpg/800px-Coelodonta_antiquitatis_reconstruction_01.jpg" },
+            { id: 12, name: "Мегатерій", category: "ice", period: "10 тис. років тому", size: 4000, diet: "Травоїдний 🌿", funFact: "Це гігантський лінивець розміром зі слона! Він не лазив по деревах.", desc: "Ходив по землі і ставав на задні лапи, щоб дістати листя з високих гілок.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Megatherium_americanum_neotype.jpg/800px-Megatherium_americanum_neotype.jpg" },
+            { id: 13, name: "Гліптодон", category: "ice", period: "10 тис. років тому", size: 2000, diet: "Травоїдний 🌿", funFact: "Носив на спині цільний панцир, схожий на автомобіль 'Жук'.", desc: "Родич сучасних броненосців, але гігантського розміру.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Glyptodon_asper_Senckenberg.jpg/800px-Glyptodon_asper_Senckenberg.jpg" },
+            // RECENT
+            { id: 14, name: "Птах Додо", category: "recent", period: "1681 рік", size: 20, diet: "Фрукти 🍎", funFact: "Не вмів літати і був дуже довірливим, бо не мав ворогів на своєму острові.", desc: "Смішний, пухкий птах з острова Маврикій. На жаль, швидко зник через людей.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Dodo_1.JPG/800px-Dodo_1.JPG" },
+            { id: 15, name: "Стеллерова Корова", category: "recent", period: "1768 рік", size: 10000, diet: "Водорості 🌿", funFact: "Морська тварина, більша за слона, яка їла тільки морську капусту.", desc: "Була дуже повільною і доброю. Її винищили всього за 27 років після відкриття.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Hydrodamalis_gigas.jpg/800px-Hydrodamalis_gigas.jpg" },
+            { id: 16, name: "Квага", category: "recent", period: "1883 рік", size: 250, diet: "Травоїдний 🌿", funFact: "Виглядала наполовину як зебра (спереду), а наполовину як кінь (ззаду).", desc: "Незвичайна родичка зебри, яка жила в Південній Африці.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Quagga_in_Regents_Park_Zoo.jpg/800px-Quagga_in_Regents_Park_Zoo.jpg" },
+            { id: 17, name: "Тасманійський Вовк", category: "recent", period: "1936 рік", size: 30, diet: "Хижак 🥩", funFact: "Міг відкривати пащу неймовірно широко — на 120 градусів!", desc: "Сумчастий хижак, схожий на собаку зі смужками тигра на спині.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Thylacinus_cynocephalus_Gould_john_gould_mammals_of_australia_1863.jpg/800px-Thylacinus_cynocephalus_Gould_john_gould_mammals_of_australia_1863.jpg" },
+            { id: 18, name: "Птах Моа", category: "recent", period: "1445 рік", size: 250, diet: "Травоїдний 🌿", funFact: "Був набагато вищим за людину і зовсім не мав крил, навіть маленьких.", desc: "Гігантський птах з Нової Зеландії. Єдиний птах в історії без крил.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Moa_skeletons_in_Canterbury_Museum%2C_Christchurch%2C_New_Zealand.jpg/450px-Moa_skeletons_in_Canterbury_Museum%2C_Christchurch%2C_New_Zealand.jpg" },
+            { id: 19, name: "Байцзі (Дельфін)", category: "recent", period: "2006 рік", size: 150, diet: "Риба 🐟", funFact: "Був майже сліпим і орієнтувався в каламутній воді за допомогою ехолокації.", desc: "Рідкісний річковий дельфін з Китаю, який зник зовсім недавно.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Baiji_2.jpg/800px-Baiji_2.jpg" },
+            { id: 20, name: "Мандрівний Голуб", category: "recent", period: "1914 рік", size: 0.3, diet: "Насіння 🌰", funFact: "Колись їхні зграї були такими величезними, що закривали небо на кілька годин.", desc: "Був одним з найчисленніших птахів на Землі, але люди знищили їх усіх.", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Ectopistes_migratorius_couple.jpg/800px-Ectopistes_migratorius_couple.jpg" }
+        ];
+
+        // --- NEW 20 QUESTION QUIZ DATA WITH EXPLANATIONS ---
+        const quizData = [
+            {
+                q: "Що було особливого у птаха Додо?",
+                options: ["Він вмів літати швидше за всіх", "Він мав величезні зуби", "Він не вмів літати і був дуже довірливим", "Він був зеленого кольору"],
+                correct: 2,
+                explanations: [
+                    "Ні, Додо зовсім не вмів літати. Його крила були занадто маленькими.",
+                    "Ні, у птахів немає зубів (окрім дуже давніх предків). Додо їв фрукти дзьобом.",
+                    "Правильно! На його острові не було хижаків, тому він розучився літати і не боявся людей, що його і погубило.",
+                    "Ні, судячи з малюнків, він був сіро-коричневим."
+                ]
+            },
+            {
+                q: "Для чого Шерстистому Мамонту була потрібна така довга шерсть?",
+                options: ["Щоб бути модним", "Щоб не замерзнути в Льодовиковий період", "Щоб ховатися у високій траві", "Це не шерсть, а пір'я"],
+                correct: 1,
+                explanations: [
+                    "Смішно, але ні. Мамонти не думали про моду.",
+                    "Точно! Він жив у часи, коли на Землі було дуже холодно, і шерсть працювала як тепла шуба.",
+                    "Ні, в тундрі, де він жив, трава була низькою, а він був величезним.",
+                    "Ні, це точно була густа, тепла шерсть."
+                ]
+            },
+            {
+                q: "Яка тварина виглядала спереду як зебра, а ззаду як кінь?",
+                options: ["Квага", "Окапі", "Жираф", "Тарпан"],
+                correct: 0,
+                explanations: [
+                    "Правильно! Квага мала смужки тільки на голові та шиї, а решта тіла була коричневою.",
+                    "Окапі теж має смужки на ногах, але Квага — це інша тварина, яка вже вимерла.",
+                    "Жираф плямистий, а не смугастий.",
+                    "Тарпан — це дикий кінь, але він не мав смужок, як у зебри."
+                ]
+            },
+            {
+                q: "Птеранодон — це динозавр?",
+                options: ["Так, звісно!", "Ні, це літаючий ящур (птерозавр)", "Це вид стародавнього птаха", "Це великий кажан"],
+                correct: 1,
+                explanations: [
+                    "Багато хто так думає, але ні. Динозаври жили на землі, а Птеранодон літав.",
+                    "Молодець! Вчені називають їх птерозаврами — літаючими рептиліями, родичами динозаврів.",
+                    "Ні, у птахів є пір'я, а у Птеранодона були шкірясті крила.",
+                    "Ні, кажани — це ссавці, і вони з'явилися набагато пізніше."
+                ]
+            },
+            {
+                q: "Чим харчувався гігантський Мегалодон?",
+                options: ["Водоростями", "Тільки маленькою рибкою", "Китами та великими морськими тваринами", "Він не їв, він фотосинтезував"],
+                correct: 2,
+                explanations: [
+                    "Ні, з такими величезними зубами він точно був хижаком.",
+                    "Маленької рибки йому б не вистачило, адже він був велетенським.",
+                    "Правильно! Він був верхівкою харчового ланцюга і полював на найбільшу здобич в океані.",
+                    "Смішно, але тільки рослини можуть фотосинтезувати. Мегалодон був акулою."
+                ]
+            },
+            {
+                q: "Яка головна особливість Смілодона?",
+                options: ["Довгий хобот", "Величезні ікла (зуби)", "Панцир на спині", "Він вмів швидко бігати"],
+                correct: 1,
+                explanations: [
+                    "Ні, хобот був у мамонта.",
+                    "Так! Його ікла досягали 28 см. Тому його називають шаблезубим тигром.",
+                    "Панцир був у Гліптодона.",
+                    "Вчені вважають, що через свою будову він не був дуже швидким бігуном, а нападав із засідки."
+                ]
+            },
+            {
+                q: "Що носив на своїй спині Гліптодон?",
+                options: ["Рюкзак", "Великі крила", "Міцний кістяний панцир", "Довгу шерсть"],
+                correct: 2,
+                explanations: [
+                    "Ні, тварини не носять рюкзаки :)",
+                    "Ні, він був наземною твариною і не вмів літати.",
+                    "Правильно! Він був схожий на велетенського броненосця з цільним куполоподібним панциром для захисту.",
+                    "Шерсть носили мамонти та носороги, а Гліптодон був вкритий бронею."
+                ]
+            },
+            {
+                q: "Хто з цих тварин був ТРАВОЇДНИМ (їв рослини)?",
+                options: ["Тиранозавр Рекс", "Смілодон", "Трицератопс", "Титанобоа"],
+                correct: 2,
+                explanations: [
+                    "Ні, Т-Рекс був найвідомішим хижаком.",
+                    "Ні, Смілодон — це шаблезубий тигр, хижак.",
+                    "Правильно! Незважаючи на свій грізний вигляд і роги, Трицератопс мирно жував папороть.",
+                    "Ні, Титанобоа — це гігантська змія-хижак."
+                ]
+            },
+            {
+                q: "Чому птах Моа з Нової Зеландії унікальний?",
+                options: ["Він мав три ноги", "Він був єдиним птахом взагалі без крил", "Він вмів плавати під водою, як риба", "Він світився в темряві"],
+                correct: 1,
+                explanations: [
+                    "Ні, у нього було дві ноги, як у всіх птахів.",
+                    "Це правда! У інших нелітаючих птахів (страус, ківі) є маленькі залишки крил, а у Моа не було навіть їх.",
+                    "Ні, він був сухопутним птахом.",
+                    "Це було б круто, але ні, він не світився."
+                ]
+            },
+            {
+                q: "Де жила гігантська змія Титанобоа?",
+                options: ["У холодній тундрі", "У жарких тропічних джунглях", "Глибоко в океані", "У пустелі Сахара"],
+                correct: 1,
+                explanations: [
+                    "Ні, змії холоднокровні і не можуть жити в сильному холоді.",
+                    "Правильно! Вона жила в дуже теплому кліматі, в заболочених джунглях Південної Америки.",
+                    "Ні, це була прісноводна або наземна змія, не морська.",
+                    "У пустелі їй би не вистачило води та їжі."
+                ]
+            },
+             {
+                q: "Який динозавр використовував свій гребінь як музичний інструмент?",
+                options: ["Стегозавр", "Трицератопс", "Паразауролоф", "Т-Рекс"],
+                correct: 2,
+                explanations: [
+                    "Ні, у Стегозавра були пластини на спині.",
+                    "Ні, у Трицератопса був комір і роги.",
+                    "Правильно! Порожнистий гребінь на його голові працював як резонатор, посилюючи звуки.",
+                    "Ні, Т-Рекс просто голосно ричав (напевно)."
+                ]
+            },
+            {
+                q: "Скільки приблизно важила Стеллерова морська корова?",
+                options: ["Як кішка (5 кг)", "Як людина (80 кг)", "Як великий слон (10 тонн)", "Як синій кит (150 тонн)"],
+                correct: 2,
+                explanations: [
+                    "Ні, вона була набагато більшою.",
+                    "Ні, вона була морським велетнем.",
+                    "Правильно! Це була величезна тварина, яка мирно плавала і їла водорості.",
+                    "Ні, синій кит набагато більший, але морська корова все одно була гігантською."
+                ]
+            },
+            {
+                q: "Що незвичайного було у Мегатерія?",
+                options: ["Це був хижий кролик", "Це був лінивець розміром зі слона", "Він мав крила", "Він жив під землею"],
+                correct: 1,
+                explanations: [
+                    "Смішна ідея, але ні.",
+                    "Так! Уяви собі сучасного лінивця, тільки збільшеного до розмірів слона. Він ходив по землі.",
+                    "Ні, він був занадто важким для польотів.",
+                    "Ні, він був занадто великим для життя в норах."
+                ]
+            },
+            {
+                q: "Археоптерикс важливий, тому що...",
+                options: ["Він був найбільшим динозавром", "Він показав зв'язок між динозаврами та птахами", "Він першим полетів у космос", "Він вмів говорити"],
+                correct: 1,
+                explanations: [
+                    "Ні, він був маленьким, розміром з ворону.",
+                    "Правильно! Він мав ознаки і рептилій (зуби, хвіст), і птахів (пір'я), що доводить їх спорідненість.",
+                    "Ні, це було б дивно :)",
+                    "Ні, він не вмів розмовляти."
+                ]
+            },
+            {
+                q: "Чим особливий Тасманійський вовк?",
+                options: ["Він був сумчастим (носив дітей у сумці)", "Він був зеленого кольору в цяточку", "Він харчувався тільки медом", "Він жив на Північному полюсі"],
+                correct: 0,
+                explanations: [
+                    "Правильно! Хоча він схожий на собаку, він родич кенгуру і мав сумку для малят.",
+                    "Ні, він був сіро-коричневим зі смужками.",
+                    "Ні, він був хижаком і їв м'ясо.",
+                    "Ні, він жив у Австралії та на острові Тасманія, де тепло."
+                ]
+            },
+            {
+                q: "Що захищало Стегозавра від хижаків?",
+                options: ["Він дуже швидко бігав", "Гострі шипи на кінці хвоста", "Отруйний укус", "Він ставав невидимим"],
+                correct: 1,
+                explanations: [
+                    "Ні, він був доволі повільним через свої короткі лапи.",
+                    "Так! Він міг сильно вдарити хвостом з чотирма гострими шипами, захищаючись від ворогів.",
+                    "Ні, у нього не було отрути.",
+                    "Це тільки в казках :)"
+                ]
+            },
+            {
+                q: "Чому зникли Мандрівні голуби, яких колись були мільярди?",
+                options: ["Вони всі полетіли на іншу планету", "Через зміну клімату", "Люди полювали на них занадто багато", "Їх з'їли динозаври"],
+                correct: 2,
+                explanations: [
+                    "Ні, це неможливо.",
+                    "Зміна клімату впливає, але головна причина була інша.",
+                    "На жаль, це правда. Люди бездумно полювали на них у величезних кількостях, поки не знищили всіх.",
+                    "Ні, динозаври вимерли за мільйони років до появи цих голубів."
+                ]
+            },
+            {
+                q: "Байцзі — це...",
+                options: ["Гірський козел", "Річковий дельфін з Китаю", "Вид стародавнього папуги", "Морська черепаха"],
+                correct: 1,
+                explanations: [
+                    "Ні.",
+                    "Правильно! Це рідкісний прісноводний дельфін, який жив у річці Янцзи і зник зовсім недавно.",
+                    "Ні.",
+                    "Ні."
+                ]
+            },
+            {
+                q: "Який факт про мозок Стегозавра правдивий?",
+                options: ["Він був величезним, як кавун", "Він був дуже маленьким, як волоський горіх", "У нього було два мозки", "У нього зовсім не було мозку"],
+                correct: 1,
+                explanations: [
+                    "Ні, це міф. Голова Стегозавра була маленькою.",
+                    "Це правда. Незважаючи на велике тіло, його мозок був дуже крихітним.",
+                    "Це старий міф. Вчені виявили потовщення в спинному мозку, але це не був другий головний мозок.",
+                    "Мозок потрібен усім тваринам, щоб жити."
+                ]
+            },
+            {
+                q: "Чого вчить нас історія зниклих тварин?",
+                options: ["Що тварини нудні", "Що треба берегти природу, щоб не втратити інших тварин", "Що динозаври скоро повернуться", "Нічого не вчить"],
+                correct: 1,
+                explanations: [
+                    "Зовсім ні, вони дуже цікаві!",
+                    "Правильно! Це найголовніший урок. Багато тварин зникло через дії людей, і ми маємо захищати тих, хто залишився.",
+                    "Навряд чи, це можливо тільки в кіно.",
+                    "Історія завжди нас чомусь вчить."
+                ]
+            }
+        ];
+
+        // --- APP STATE ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGallery(animals);
+            initCharts();
+            startQuiz(); // Initialize quiz state
+        });
+
+        // --- FUNCTIONS ---
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 1. GALLERY & FILTERS
+        function renderGallery(data) {
+            const grid = document.getElementById('animal-grid');
+            grid.innerHTML = '';
+            data.forEach(animal => {
+                let tagStyle = "bg-gray-200 text-gray-800";
+                if(animal.category === 'dino') tagStyle = "bg-orange-100 text-orange-800";
+                if(animal.category === 'ice') tagStyle = "bg-blue-100 text-blue-800";
+                if(animal.category === 'recent') tagStyle = "bg-red-100 text-red-800";
+
+                grid.innerHTML += `
+                    <div class="bg-white rounded-2xl overflow-hidden card-hover shadow-lg border border-emerald-50 flex flex-col h-full">
+                        <div class="card-img-container group">
+                            <img src="${animal.image}" alt="${animal.name}" loading="lazy" onerror="this.src='https://placehold.co/800x600/e5e7eb/A3A3A3?text=Зображення+недоступне'">
+                            <div class="absolute top-2 right-2 ${tagStyle} text-xs font-bold px-3 py-1 rounded-full shadow-sm opacity-90">
+                                ${animal.period}
+                            </div>
+                        </div>
+                        <div class="p-6 flex-grow flex flex-col">
+                            <h3 class="text-xl font-black text-[#064e3b] mb-2 fun-font">${animal.name}</h3>
+                            <p class="text-sm text-gray-500 mb-4 font-bold flex gap-2">
+                                <span>${animal.diet}</span> • <span>${animal.size < 1000 ? animal.size + " кг" : (animal.size/1000) + " т"}</span>
+                            </p>
+                            <p class="text-gray-700 text-sm mb-6 leading-relaxed">${animal.desc}</p>
+                            <div class="mt-auto bg-yellow-50 p-4 rounded-xl border border-yellow-100 relative">
+                                <span class="absolute -top-3 left-4 bg-yellow-400 text-[#064e3b] text-xs font-black px-2 py-1 rounded-md transform -rotate-2">ЦІКАВИНКА!</span>
+                                <p class="text-sm text-[#064e3b] italic mt-2">"${animal.funFact}"</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterAnimals(cat) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
+            event.target.classList.add('filter-active');
+            cat === 'all' ? renderGallery(animals) : renderGallery(animals.filter(a => a.category === cat));
+        }
+
+        // 2. CHARTS (Simplified for brevity, logic remains similar)
+        function initCharts() {
+            const top5 = [...animals].sort((a,b) => b.size - a.size).slice(0, 5);
+            new Chart(document.getElementById('weightChart'), {
+                type: 'bar',
+                data: {
+                    labels: top5.map(a=>a.name),
+                    datasets: [{ data: top5.map(a=>a.size/1000), backgroundColor: '#3b82f6', borderRadius: 8 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false}}, scales:{y:{title:{display:true, text:'Тонни'}}} }
+            });
+
+            let diets = {veg:0, meat:0}; animals.forEach(a => a.diet.includes("Траво") ? diets.veg++ : diets.meat++);
+            new Chart(document.getElementById('dietChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Травоїдні 🌿', 'Хижаки та інші 🥩'],
+                    datasets: [{ data: [diets.veg, diets.meat], backgroundColor: ['#4ade80', '#f87171'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins:{legend:{position:'bottom'}} }
+            });
+
+            const timelineMap = animals.map(a => ({
+                x: a.category==='dino'?1:a.category==='ice'?2:3,
+                y: a.size, r: Math.sqrt(a.size)/4, label: a.name,
+                color: a.category==='dino'?'#ea580c':a.category==='ice'?'#2563eb':'#dc2626'
+            }));
+            Plotly.newPlot('timelinePlot', [{
+                x: timelineMap.map(d=>d.x+Math.random()*0.3), y: timelineMap.map(d=>d.y), text: timelineMap.map(d=>d.label),
+                mode: 'markers', marker: {size: timelineMap.map(d=>d.r), color: timelineMap.map(d=>d.color), sizemode:'diameter', sizeref:2}
+            }], {
+                xaxis:{tickvals:[1,2,3], ticktext:['Динозаври','Льодовик','Недавно'], range:[0.5,3.5], showgrid:false},
+                yaxis:{type:'log', title:'Вага (лог. шкала)'}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{t:20,b:40,l:50,r:20}
+            }, {displayModeBar: false, responsive: true});
+        }
+
+        // 3. NEW QUIZ LOGIC (20 Questions with Explanations)
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('quiz-game-area').classList.remove('hidden-content');
+            document.getElementById('quiz-results').classList.add('hidden-content');
+            updateScoreCounter();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const qData = quizData[currentQuestionIndex];
+            document.getElementById('question-counter').textContent = `Питання ${currentQuestionIndex + 1} з ${quizData.length}`;
+            document.getElementById('question-text').textContent = qData.q;
+            
+            const optsContainer = document.getElementById('options-container');
+            optsContainer.innerHTML = '';
+            qData.options.forEach((opt, idx) => {
+                optsContainer.innerHTML += `
+                    <button onclick="checkAnswer(${idx})" class="quiz-option w-full text-left p-4 rounded-xl bg-gray-50 border-2 border-gray-200 font-bold text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 transition">
+                        ${opt}
+                    </button>
+                `;
+            });
+
+            // Reset UI
+            document.getElementById('feedback-area').classList.add('hidden-content');
+            document.getElementById('next-btn').classList.add('hidden-content');
+            document.getElementById('feedback-area').className = 'hidden-content bg-gray-50 p-5 rounded-xl border-l-4 mb-6 transition-all'; // Reset styles
+        }
+
+        function checkAnswer(selectedIdx) {
+            const qData = quizData[currentQuestionIndex];
+            const options = document.querySelectorAll('.quiz-option');
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+
+            // Disable all buttons
+            options.forEach(btn => btn.classList.add('disabled'));
+
+            // Highlight selected answer
+            if (selectedIdx === qData.correct) {
+                options[selectedIdx].classList.add('quiz-correct');
+                feedbackArea.classList.add('border-green-500', 'bg-green-50');
+                feedbackTitle.textContent = "✅ Правильно!";
+                feedbackTitle.className = "font-black text-xl mb-2 text-green-700";
+                score++;
+            } else {
+                options[selectedIdx].classList.add('quiz-wrong');
+                options[qData.correct].classList.add('quiz-correct'); // Show correct one too
+                feedbackArea.classList.add('border-red-500', 'bg-red-50');
+                feedbackTitle.textContent = "❌ Не зовсім так...";
+                feedbackTitle.className = "font-black text-xl mb-2 text-red-700";
+            }
+
+            // Show specific explanation for the chosen answer
+            feedbackText.textContent = qData.explanations[selectedIdx];
+            feedbackArea.classList.remove('hidden-content');
+            document.getElementById('next-btn').classList.remove('hidden-content');
+            updateScoreCounter();
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quiz-game-area').classList.add('hidden-content');
+            document.getElementById('quiz-results').classList.remove('hidden-content');
+            document.getElementById('final-score').textContent = score;
+            
+            let msg = "";
+            if (score === 20) msg = "Неймовірно! Ти справжній палеонтолог-експерт! 🦖🎓";
+            else if (score >= 15) msg = "Чудовий результат! Ти дуже багато знаєш! 👍";
+            else if (score >= 10) msg = "Непогано! Але ще є що вивчати. 🧐";
+            else msg = "Спробуй ще раз! Прочитай енциклопедію уважніше. 😉";
+            document.getElementById('result-message').textContent = msg;
+        }
+
+        function updateScoreCounter() {
+            document.getElementById('score-counter').textContent = `Бали: ${score}`;
+        }
+    </script>
+</body>
+</html>
