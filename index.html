@@ -566,18 +566,103 @@
                 options: { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins:{legend:{position:'bottom'}} }
             });
 
-            const timelineMap = animals.map(a => ({
-                x: a.category==='dino'?1:a.category==='ice'?2:3,
-                y: a.size, r: Math.sqrt(a.size)/4, label: a.name,
-                color: a.category==='dino'?'#ea580c':a.category==='ice'?'#2563eb':'#dc2626'
+            // C. EMOJI SCATTER CHART (Replaces Plotly)
+            const ctxEmoji = document.getElementById('emojiTimelineChart').getContext('2d');
+            
+            // Map animals to scatter data
+            // X: 0=Dino, 1=Ice, 2=Recent
+            // Y: Weight (Log)
+            const timelineData = animals.map(a => ({
+                x: a.category === 'dino' ? 0 : (a.category === 'ice' ? 1 : 2),
+                y: a.size,
+                animal: a
+            })).map(d => ({
+                // Add slight jitter to X so icons don't overlap too much
+                x: d.x + (Math.random() * 0.6 - 0.3),
+                y: d.y,
+                icon: d.animal.icon,
+                name: d.animal.name
             }));
-            Plotly.newPlot('timelinePlot', [{
-                x: timelineMap.map(d=>d.x+Math.random()*0.3), y: timelineMap.map(d=>d.y), text: timelineMap.map(d=>d.label),
-                mode: 'markers', marker: {size: timelineMap.map(d=>d.r), color: timelineMap.map(d=>d.color), sizemode:'diameter', sizeref:2}
-            }], {
-                xaxis:{tickvals:[1,2,3], ticktext:['Динозаври','Льодовик','Недавно'], range:[0.5,3.5], showgrid:false},
-                yaxis:{type:'log', title:'Вага (лог. шкала)'}, paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)', margin:{t:20,b:40,l:50,r:20}
-            }, {displayModeBar: false, responsive: true});
+
+            // Custom Plugin to draw Emojis
+            const emojiPlugin = {
+                id: 'emojiPlugin',
+                afterDatasetsDraw(chart) {
+                    const ctx = chart.ctx;
+                    chart.data.datasets.forEach((dataset, i) => {
+                        const meta = chart.getDatasetMeta(i);
+                        meta.data.forEach((element, index) => {
+                            const data = dataset.data[index];
+                            const x = element.x;
+                            const y = element.y;
+                            
+                            ctx.save();
+                            ctx.font = '30px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(data.icon, x, y);
+                            ctx.restore();
+                        });
+                    });
+                }
+            };
+
+            new Chart(ctxEmoji, {
+                type: 'scatter',
+                plugins: [emojiPlugin],
+                data: {
+                    datasets: [{
+                        data: timelineData,
+                        pointRadius: 0, // Hide default dots
+                        pointHitRadius: 25 // Make area clickable
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: -0.5,
+                            max: 2.5,
+                            ticks: {
+                                callback: function(value) {
+                                    if(Math.abs(value - 0) < 0.2) return "Ера Динозаврів 🦖";
+                                    if(Math.abs(value - 1) < 0.2) return "Льодовиковий Період ❄️";
+                                    if(Math.abs(value - 2) < 0.2) return "Час Людей 🧑";
+                                    return "";
+                                },
+                                font: { size: 14, weight: 'bold' }
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Вага (чим вище - тим важче)' },
+                            grid: { color: '#e5e7eb' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const item = context.raw;
+                                    return `${item.icon} ${item.name} (${item.y < 1000 ? item.y + ' кг' : (item.y/1000).toFixed(1) + ' т'})`;
+                                }
+                            },
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#000',
+                            bodyColor: '#000',
+                            bodyFont: { size: 14, weight: 'bold' },
+                            padding: 10,
+                            borderColor: '#059669',
+                            borderWidth: 2
+                        }
+                    }
+                }
+            });
         }
 
         // 3. NEW QUIZ LOGIC (20 Questions with Explanations)
