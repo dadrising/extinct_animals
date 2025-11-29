@@ -3,266 +3,309 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Втрачений Світ: Велика Енциклопедія та Гра</title>
+    <title>Втрачений Світ: Глобальна Експедиція</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+    <!-- Three.js for 3D Globe -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
         body {
             font-family: 'Nunito', sans-serif;
-            background-color: #f0fdf4; /* Light green background */
-            color: #064e3b; /* Dark green text */
+            background-color: #ecfdf5;
+            color: #064e3b;
         }
         h1, h2, h3, .fun-font {
             font-family: 'Fredoka', sans-serif;
         }
-        /* Card Image Styling */
-        .card-img-container {
-            height: 220px;
+        
+        /* Card Styles */
+        .animal-card {
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .animal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .card-img-wrapper {
+            height: 240px;
             overflow: hidden;
             position: relative;
-            background-color: #e5e7eb;
+            background-color: #e2e8f0;
         }
-        .card-img-container img {
+        .card-img-wrapper img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: transform 0.5s ease;
         }
-        .card-hover:hover .card-img-container img {
-            transform: scale(1.1);
+        .animal-card:hover .card-img-wrapper img {
+            transform: scale(1.05);
         }
-        .card-hover {
-            transition: all 0.3s ease;
+
+        /* Globe Container */
+        #globe-container {
+            width: 100%;
+            height: 600px;
+            background: #0f172a; /* Dark background as fallback */
+            border-radius: 2rem;
+            overflow: hidden;
+            position: relative;
+            cursor: move;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        .globe-tooltip {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-weight: bold;
+            pointer-events: none;
+            display: none;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 2px solid #059669;
+            transform: translate(-50%, -120%);
+            text-align: center;
+            min-width: 120px;
         }
-        /* Buttons */
-        .btn-primary {
-            background-color: #059669; /* Emerald-600 */
-            color: white;
-            transition: all 0.3s;
-        }
-        .btn-primary:hover {
-            background-color: #047857;
-        }
+
         /* Filters */
-        .filter-active {
-            background-color: #064e3b !important;
-            color: white !important;
-        }
-        /* Quiz Styles */
-        .quiz-option {
+        .filter-btn {
             transition: all 0.2s;
         }
+        .filter-active {
+            background-color: #059669 !important;
+            color: white !important;
+            transform: scale(1.05);
+        }
+
+        /* Quiz */
         .quiz-option:hover:not(.disabled) {
-            background-color: #d1fae5; /* Green-100 */
-            transform: scale(1.02);
+            background-color: #d1fae5;
         }
-        .quiz-correct { background-color: #86efac !important; border-color: #22c55e !important; } /* Green-300 */
-        .quiz-wrong { background-color: #fca5a5 !important; border-color: #ef4444 !important; } /* Red-300 */
-        .disabled { pointer-events: none; opacity: 0.8; }
-        
-        .chart-container { position: relative; width: 100%; height: 350px; }
-        .hidden-content { display: none; }
-        
-        /* Mobile Scroll for Chart */
-        .chart-scroll-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            padding-bottom: 1rem;
-        }
-        .chart-scroll-inner {
-            min-width: 600px; /* Force width on mobile so emojis don't overlap */
-            height: 500px;
-            position: relative;
-        }
-        
+        .quiz-correct { background-color: #86efac !important; border-color: #22c55e !important; }
+        .quiz-wrong { background-color: #fca5a5 !important; border-color: #ef4444 !important; }
+        .disabled { pointer-events: none; opacity: 0.7; }
+
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: #f0fdf4; }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #ecfdf5; }
         ::-webkit-scrollbar-thumb { background: #059669; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
     <!-- Navbar -->
-    <nav class="bg-[#064e3b] text-emerald-50 sticky top-0 z-50 shadow-lg border-b-4 border-[#047857]">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="text-2xl font-black tracking-wide flex items-center gap-2 fun-font">
-                🦕 Диво-Парк Історії
+    <nav class="bg-[#064e3b] text-white sticky top-0 z-50 shadow-lg border-b-4 border-[#047857]">
+        <div class="container mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="text-2xl font-black flex items-center gap-2 fun-font">
+                🌍 Втрачений Світ
             </div>
-            <div class="hidden md:flex space-x-4 font-bold text-sm uppercase tracking-wider">
-                <button onclick="scrollToSection('gallery')" class="hover:text-yellow-300 transition py-2 px-4 rounded-lg hover:bg-[#047857]">Тварини</button>
-                <button onclick="scrollToSection('datalab')" class="hover:text-yellow-300 transition py-2 px-4 rounded-lg hover:bg-[#047857]">Рекорди</button>
-                <button onclick="scrollToSection('quiz-section')" class="bg-yellow-400 text-[#064e3b] py-2 px-4 rounded-lg hover:bg-yellow-300 transition shadow-md animate-pulse">Грати!</button>
+            <div class="flex space-x-2 md:space-x-4 font-bold text-xs md:text-sm uppercase tracking-wider">
+                <button onclick="scrollToSection('gallery')" class="hover:text-yellow-300 py-2 px-3 rounded transition">Енциклопедія</button>
+                <button onclick="scrollToSection('globe-section')" class="hover:text-yellow-300 py-2 px-3 rounded transition">Глобус</button>
+                <button onclick="scrollToSection('quiz-section')" class="bg-yellow-400 text-[#064e3b] py-2 px-4 rounded-lg hover:bg-yellow-300 shadow-md animate-pulse transition">Грати</button>
             </div>
         </div>
     </nav>
 
     <!-- Hero -->
-    <header class="container mx-auto px-4 py-12 md:py-20 text-center bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]">
-        <h1 class="text-5xl md:text-7xl font-black text-[#064e3b] mb-6 drop-shadow-sm">
-            Де Вони <span class="text-emerald-500">Зникли?</span>
+    <header class="container mx-auto px-4 py-10 text-center">
+        <h1 class="text-4xl md:text-6xl font-black text-[#064e3b] mb-4 drop-shadow-sm">
+            Подорож у Часі та Просторі
         </h1>
-        <p class="text-xl text-[#065f46] max-w-2xl mx-auto mb-8 font-bold leading-relaxed">
-            Привіт, досліднице! 🕵️‍♀️ Готова до великої пригоди? Ми вирушаємо в минуле, щоб побачити 24 дивовижних тварини, яких більше немає на Землі. А потім перевіримо твої знання у великій грі!
+        <p class="text-lg md:text-xl text-[#065f46] max-w-3xl mx-auto mb-8 font-bold">
+            Дізнайся, де жили динозаври, мамонти та інші дивовижні істоти. Досліджуй картки, знаходь їх на глобусі та перевір свої знання!
         </p>
-        <button onclick="scrollToSection('gallery')" class="btn-primary px-10 py-4 rounded-full text-2xl font-black shadow-xl transform transition hover:scale-105 border-b-4 border-[#064e3b]">
-            Почати Експедицію 🚀
-        </button>
     </header>
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 space-y-24 pb-20">
+    <main class="container mx-auto px-4 space-y-20 pb-20">
 
-        <!-- GALLERY SECTION -->
+        <!-- GALLERY SECTION (First) -->
         <section id="gallery">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-black text-[#064e3b] mb-4">📸 Енциклопедія (24 Тварини)</h2>
-                <div class="flex flex-wrap justify-center gap-3">
-                    <button onclick="filterAnimals('all')" class="filter-btn filter-active px-6 py-2 rounded-full bg-white text-[#064e3b] font-bold shadow-md border-2 border-transparent hover:border-emerald-500 transition">Всі разом</button>
-                    <button onclick="filterAnimals('dino')" class="filter-btn px-6 py-2 rounded-full bg-white text-orange-600 font-bold shadow-md border-2 border-transparent hover:border-orange-500 transition">🦖 Динозаври</button>
-                    <button onclick="filterAnimals('ice')" class="filter-btn px-6 py-2 rounded-full bg-white text-blue-600 font-bold shadow-md border-2 border-transparent hover:border-blue-500 transition">❄️ Льодовиковий період</button>
-                    <button onclick="filterAnimals('recent')" class="filter-btn px-6 py-2 rounded-full bg-white text-red-600 font-bold shadow-md border-2 border-transparent hover:border-red-500 transition">😢 Зникли недавно</button>
+            <div class="text-center mb-10">
+                <h2 class="text-4xl font-black text-[#064e3b] mb-6">📖 Енциклопедія Тварин</h2>
+                
+                <!-- Controls Row -->
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 max-w-4xl mx-auto">
+                    
+                    <!-- Filters -->
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="applyFilter('all')" class="filter-btn filter-active px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-sm hover:bg-emerald-100">Всі</button>
+                        <button onclick="applyFilter('dino')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-sm hover:bg-red-100">🦖 Динозаври</button>
+                        <button onclick="applyFilter('mammal')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-sm hover:bg-blue-100">🐘 Ссавці</button>
+                        <button onclick="applyFilter('bird')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-sm hover:bg-yellow-100">🦅 Птахи</button>
+                        <button onclick="applyFilter('water')" class="filter-btn px-4 py-2 rounded-full bg-gray-100 text-gray-700 font-bold text-sm hover:bg-cyan-100">🐳 Водні</button>
+                    </div>
+
+                    <div class="w-px h-8 bg-gray-300 hidden md:block"></div>
+
+                    <!-- Sort -->
+                    <div class="flex items-center gap-2">
+                        <label for="sort-select" class="font-bold text-sm text-gray-600">Сортувати:</label>
+                        <select id="sort-select" onchange="applySort()" class="px-3 py-2 rounded-lg border-2 border-emerald-200 focus:outline-none focus:border-emerald-500 font-bold text-sm text-[#064e3b]">
+                            <option value="default">Як у списку</option>
+                            <option value="weight-desc">🐘 Від найважчих</option>
+                            <option value="weight-asc">🐁 Від найлегших</option>
+                            <option value="time-old">⏳ Давніші спочатку</option>
+                            <option value="time-new">😢 Недавні спочатку</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Grid -->
-            <div id="animal-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div id="animal-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 <!-- Javascript will populate this -->
             </div>
         </section>
 
-        <!-- DATA LAB SECTION -->
-        <section id="datalab" class="bg-white p-6 md:p-10 rounded-[3rem] shadow-xl border-2 border-emerald-100">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-black text-[#064e3b]">📊 Лабораторія Фактів</h2>
-                <p class="mt-2 text-xl text-gray-600">Наука може бути веселою! Подивись на ці графіки.</p>
-            </div>
-
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-12">
-                <!-- Charts -->
-                <div class="bg-blue-50 p-6 rounded-3xl border border-blue-100">
-                    <h3 class="text-2xl font-bold mb-4 text-center text-blue-900">🐘 Топ-5 Найважчих (Тонни)</h3>
-                    <div class="chart-container"><canvas id="weightChart"></canvas></div>
-                </div>
-                <div class="bg-green-50 p-6 rounded-3xl border border-green-100">
-                    <h3 class="text-2xl font-bold mb-4 text-center text-green-900">🥗 Меню (Хто що їв)</h3>
-                    <div class="chart-container"><canvas id="dietChart"></canvas></div>
+        <!-- GLOBE SECTION (Second) -->
+        <section id="globe-section">
+            <div class="bg-[#1e293b] p-6 md:p-8 rounded-[2.5rem] shadow-2xl text-white">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-black mb-2 text-emerald-400">🌏 Глобус Зниклих Тварин</h2>
+                    <p class="text-gray-300 max-w-2xl mx-auto">
+                        Крути планету! 🖱️ Знаходь кольорові крапки — це місця, де жили ці тварини.
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-4 mt-4 text-xs md:text-sm font-bold">
+                        <span class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full"><span class="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></span> Динозаври</span>
+                        <span class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full"><span class="w-3 h-3 rounded-full bg-blue-400 shadow-lg shadow-blue-400/50"></span> Льодовиковий Період</span>
+                        <span class="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full"><span class="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/50"></span> Нещодавні</span>
+                    </div>
                 </div>
                 
-                <!-- NEW TIMELINE CHART CONTAINER (Optimized for Mobile) -->
-                <div class="col-span-1 xl:col-span-2 bg-gradient-to-r from-orange-50 via-blue-50 to-green-50 p-6 rounded-3xl border-4 border-white shadow-lg">
-                    <h3 class="text-2xl font-bold mb-2 text-center text-[#064e3b]">⏳ Подорож у Часі та Вазі ⚖️</h3>
-                    <p class="text-center mb-6 text-sm bg-white/60 inline-block px-4 py-1 rounded-full mx-auto block w-fit">
-                        Чим вище тварина — тим вона важча! (Прокручуй вбік, якщо дивишся з телефону 📱)
-                    </p>
-                    
-                    <!-- Scroll Wrapper -->
-                    <div class="chart-scroll-wrapper">
-                        <div class="chart-scroll-inner">
-                            <canvas id="emojiTimelineChart"></canvas>
-                        </div>
-                    </div>
+                <div id="globe-container">
+                    <div id="globe-tooltip" class="globe-tooltip text-black"></div>
                 </div>
             </div>
         </section>
 
         <!-- QUIZ SECTION -->
-        <section id="quiz-section" class="max-w-4xl mx-auto">
-            <div class="bg-gradient-to-b from-[#064e3b] to-[#047857] p-1 rounded-[2.5rem] shadow-2xl">
-                <div class="bg-[#f0fdf4] p-8 md:p-12 rounded-[2.3rem]">
-                    
-                    <div class="text-center mb-8">
-                        <h2 class="text-4xl font-black text-[#064e3b] mb-2 fun-font">🧠 Велика Вікторина!</h2>
-                        <p class="text-lg text-[#065f46]">24 питання. Чи зможеш ти відповісти на всі?</p>
-                    </div>
-
-                    <!-- Quiz Game Container -->
-                    <div id="quiz-game-area" class="bg-white p-6 rounded-2xl shadow-inner border-2 border-emerald-50">
-                        <div class="flex justify-between items-center mb-6 text-sm font-bold text-gray-500">
-                            <span id="question-counter">Питання 1 з 24</span>
-                            <span id="score-counter" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Бали: 0</span>
-                        </div>
-                        <h3 id="question-text" class="text-2xl font-bold text-[#064e3b] mb-8 min-h-[64px]">Завантаження питання...</h3>
-                        <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-                        
-                        <div id="feedback-area" class="hidden-content bg-gray-50 p-5 rounded-xl border-l-4 mb-6 transition-all">
-                            <h4 id="feedback-title" class="font-bold text-lg mb-2"></h4>
-                            <p id="feedback-text" class="text-gray-700 leading-relaxed"></p>
-                        </div>
-                        <div class="text-right">
-                            <button id="next-btn" onclick="nextQuestion()" class="hidden-content bg-yellow-400 text-[#064e3b] px-8 py-3 rounded-xl font-black hover:bg-yellow-300 transition shadow-md flex items-center gap-2 ml-auto">
-                                Наступне питання 👉
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="quiz-results" class="hidden-content text-center py-10">
-                        <div class="text-7xl mb-4">🏆</div>
-                        <h3 class="text-4xl font-black text-[#064e3b] mb-4">Тест Завершено!</h3>
-                        <p class="text-2xl mb-8">Твій результат: <span id="final-score" class="font-black text-emerald-600"></span> з 24!</p>
-                        <p id="result-message" class="text-lg text-gray-600 mb-10"></p>
-                        <button onclick="startQuiz()" class="btn-primary px-10 py-4 rounded-full font-bold shadow-lg">Спробувати ще раз</button>
-                    </div>
-
+        <section id="quiz-section" class="max-w-3xl mx-auto mt-20">
+            <div class="bg-white border-4 border-emerald-500 p-8 md:p-10 rounded-[2rem] shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-emerald-500 text-white font-bold px-6 py-2 rounded-bl-2xl">ЕКЗАМЕН 🎓</div>
+                
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-[#064e3b] mb-2 fun-font">Вікторина Палеонтолога</h2>
+                    <p class="text-gray-600">Перевір, що ти запам'ятала!</p>
                 </div>
+
+                <!-- Quiz Game Container -->
+                <div id="quiz-game-area">
+                    <div class="flex justify-between items-center mb-6 text-sm font-bold text-gray-500 border-b pb-4">
+                        <span id="question-counter">Питання 1 з 24</span>
+                        <span id="score-counter" class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">Бали: 0</span>
+                    </div>
+                    
+                    <h3 id="question-text" class="text-xl md:text-2xl font-bold text-[#064e3b] mb-6 min-h-[60px]">
+                        Завантаження...
+                    </h3>
+
+                    <div id="options-container" class="grid gap-3 mb-6">
+                        <!-- Options injected here -->
+                    </div>
+
+                    <div id="feedback-area" class="hidden-content p-4 rounded-xl border-l-4 mb-6 transition-all bg-gray-50">
+                        <h4 id="feedback-title" class="font-bold text-lg mb-1"></h4>
+                        <p id="feedback-text" class="text-sm md:text-base text-gray-700 font-medium leading-relaxed"></p>
+                    </div>
+
+                    <div class="text-right">
+                        <button id="next-btn" onclick="nextQuestion()" class="hidden-content bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition shadow-lg">
+                            Наступне 👉
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="quiz-results" class="hidden-content text-center py-8">
+                    <div class="text-6xl mb-4">🏆</div>
+                    <h3 class="text-3xl font-black text-[#064e3b] mb-4">Тест Завершено!</h3>
+                    <p class="text-xl mb-6">Твій результат: <span id="final-score" class="font-black text-emerald-600 text-2xl"></span> / 24</p>
+                    <p id="result-message" class="text-gray-600 mb-8 font-bold"></p>
+                    <button onclick="startQuiz()" class="btn-primary px-8 py-3 rounded-full font-bold shadow-lg">Спробувати ще раз</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MAILBOX SECTION -->
+        <section id="mailbox" class="max-w-2xl mx-auto mt-20 mb-10">
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-100 p-8 rounded-3xl border-2 border-indigo-200 shadow-xl text-center">
+                <h3 class="text-2xl font-black text-indigo-900 mb-2 fun-font">📬 Скринька Бажань</h3>
+                <p class="text-indigo-700 mb-6 font-medium text-sm md:text-base">
+                    Не знайшов свою улюблену тварину? Напиши її назву, і тато додасть її на сайт!
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <input type="text" id="animal-request-input" placeholder="Наприклад: Шаблезуба білка" 
+                           class="flex-grow px-5 py-3 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:outline-none text-lg">
+                    <button onclick="sendRequest()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold shadow-md transition transform hover:scale-105">
+                        Надіслати Татові 📨
+                    </button>
+                </div>
+                <p id="request-sent-msg" class="hidden-content text-green-600 font-bold mt-4">
+                    Лист створено! Перевір поштову програму. 🚀
+                </p>
             </div>
         </section>
 
     </main>
 
     <!-- Footer -->
-    <footer class="bg-[#064e3b] text-emerald-100 py-8 text-center">
+    <footer class="bg-[#064e3b] text-emerald-100/70 py-6 text-center text-sm">
         <div class="container mx-auto px-4">
-            <p class="font-bold text-xl mb-2 font-pacifico">🌍 Вивчаємо минуле, щоб берегти майбутнє.</p>
+            <p>Створено з любов'ю до історії та природи. 2023</p>
         </div>
     </footer>
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- ANIMAL DATA (LOCAL FILES) ---
+        // --- DATA STORE ---
         const animals = [
-             // DINO
-            { id: 1, name: "Тиранозавр Рекс", category: "dino", period: "66 млн років тому", size: 8000, diet: "Хижак 🥩", funFact: "Його зуб був розміром з банан!", desc: "Король динозаврів з потужними щелепами та маленькими 'ручками'.", image: "trex.jpg", icon: "🦖" },
-            { id: 2, name: "Трицератопс", category: "dino", period: "66 млн років тому", size: 9000, diet: "Травоїдний 🌿", funFact: "Мав три роги і великий кістяний комір для захисту.", desc: "Схожий на носорога, але набагато більший. Воював з Т-Рексом.", image: "triceratops.webp", icon: "🦕" },
-            { id: 3, name: "Стегозавр", category: "dino", period: "150 млн років тому", size: 3000, diet: "Травоїдний 🌿", funFact: "Мав мозок розміром з волоський горіх, але був дуже великим.", desc: "Відомий своїми пластинами на спині та шипами на хвості.", image: "stego.jpeg", icon: "🦎" },
-            { id: 4, name: "Птеранодон", category: "dino", period: "85 млн років тому", size: 50, diet: "Риба 🐟", funFact: "Це не динозавр, а літаючий ящур з розмахом крил 7 метрів!", desc: "Літав над стародавніми морями і ловив рибу, як пелікан.", image: "pteradon.webp", icon: "🦇" },
-            { id: 5, name: "Паразауролоф", category: "dino", period: "75 млн років тому", size: 2500, diet: "Травоїдний 🌿", funFact: "Використовував свій гребінь на голові як музичну трубу.", desc: "Динозавр, який вмів гудіти, щоб спілкуватися з друзями.", image: "dino.jpg", icon: "🎷" },
-            { id: 6, name: "Титанобоа", category: "dino", period: "60 млн років тому", size: 1100, diet: "Хижак 🥩", funFact: "Змія довжиною як шкільний автобус (13 метрів)!", desc: "Найбільша змія в історії. Жила в дуже жарких джунглях.", image: "Titanoboa.webp", icon: "🐍" },
-            { id: 7, name: "Мегалодон", category: "dino", period: "3 млн років тому", size: 50000, diet: "Хижак 🐟", funFact: "Його паща була настільки великою, що в ній могла б стояти людина.", desc: "Гігантська акула, яка полювала на китів у стародавніх океанах.", image: "megalodon.jpg", icon: "🦈" },
-            { id: 8, name: "Археоптерикс", category: "dino", period: "150 млн років тому", size: 1, diet: "Хижак 🐛", funFact: "Напів-птах, напів-динозавр. Мав пір'я, але також зуби і довгий хвіст.", desc: "Дідусь усіх сучасних птахів. Жив на деревах.", image: "archaeopteryx.webp", icon: "🦅" },
+            // DINOSAURS
+            { id: 1, name: "Тиранозавр Рекс", category: "dino", type: "Рептилія", period: "66 млн років тому", sortDate: -66000000, weight: 8000, diet: "Хижак 🥩", funFact: "Укус Т-Рекса був настільки сильним, що він міг дробити кістки.", desc: "Король ящерів. Жив на території сучасної Північної Америки. Мав чудовий нюх і зір.", coords: [40, -100], image: "trex.jpg", icon: "🦖" },
+            { id: 2, name: "Трицератопс", category: "dino", type: "Рептилія", period: "66 млн років тому", sortDate: -66000000, weight: 9000, diet: "Травоїдний 🌿", funFact: "Його череп був одним із найбільших серед усіх наземних тварин — понад 2 метри!", desc: "Схожий на носорога, але з трьома рогами. Жив у стадах, захищаючи малят від хижаків.", coords: [45, -105], image: "triceratops.webp", icon: "🦕" },
+            { id: 3, name: "Стегозавр", category: "dino", type: "Рептилія", period: "150 млн років тому", sortDate: -150000000, weight: 3000, diet: "Травоїдний 🌿", funFact: "Він ковтав каміння, щоб воно допомагало перетирати жорстку їжу в шлунку.", desc: "Динозавр з пластинами на спині. Вони могли змінювати колір, щоб лякати ворогів.", coords: [39, -108], image: "stego.jpeg", icon: "🦎" },
+            { id: 4, name: "Птеранодон", category: "dino", type: "Рептилія", period: "85 млн років тому", sortDate: -85000000, weight: 50, diet: "Риба 🐟", funFact: "У нього не було зубів, він ковтав рибу цілою, як пелікан.", desc: "Володар неба Мезозою. Розмах крил досягав 7 метрів. Жив на узбережжях морів.", coords: [38, -98], image: "pteradon.webp", icon: "🦇" },
+            { id: 5, name: "Паразауролоф", category: "dino", type: "Рептилія", period: "75 млн років тому", sortDate: -75000000, weight: 2500, diet: "Травоїдний 🌿", funFact: "Вчені змоделювали звук його гребеня — це було схоже на гучний звук тромбона.", desc: "Качкодзьобий динозавр. Його гребінь допомагав спілкуватися з іншими на великій відстані.", coords: [50, -110], image: "dino.jpg", icon: "🎷" },
+            { id: 6, name: "Титанобоа", category: "dino", type: "Рептилія", period: "60 млн років тому", sortDate: -60000000, weight: 1100, diet: "Хижак 🥩", funFact: "Вона була настільки товстою, що в найширшому місці сягала пояса дорослої людини.", desc: "Гігантська змія з джунглів Колумбії. Полювала на гігантських черепах і крокодилів.", coords: [4, -73], image: "Titanoboa.webp", icon: "🐍" },
+            { id: 7, name: "Мегалодон", category: "water", type: "Риба", period: "3 млн років тому", sortDate: -3000000, weight: 50000, diet: "Хижак 🐟", funFact: "Сила його укусу була в 10 разів сильнішою, ніж у великої білої акули.", desc: "Найстрашніший хижак в історії океану. Його зуби знаходять по всьому світу.", coords: [20, -150], image: "megalodon.jpg", icon: "🦈" },
+            { id: 8, name: "Археоптерикс", category: "bird", type: "Птах/Дино", period: "150 млн років тому", sortDate: -150000000, weight: 1, diet: "Комахи 🐛", funFact: "Він мав кігті на крилах, щоб лазити по деревах.", desc: "Перехідна ланка між динозаврами та птахами. Вже мав пір'я, але ще мав зубасту пащу.", coords: [48, 11], image: "archaeopteryx.webp", icon: "🦅" },
+            
             // ICE AGE
-            { id: 9, name: "Шерстистий Мамонт", category: "ice", period: "4 тис. років тому", size: 6000, diet: "Травоїдний 🌿", funFact: "Мав дуже довгу руду шерсть, щоб не замерзнути в льодовиковий період.", desc: "Схожий на слона в теплій шубі з величезними закрученими бивнями.", image: "mammoth.webp", icon: "🐘" },
-            { id: 10, name: "Смілодон (Тигр)", category: "ice", period: "10 тис. років тому", size: 400, diet: "Хижак 🥩", funFact: "Його ікла були довжиною 28 см! Вони стирчали даже із закритого рота.", desc: "Відомий як шаблезубий тигр. Був дуже сильним і полював на велику здобич.", image: "smilodont.webp", icon: "🐅" },
-            { id: 11, name: "Шерстистий Носоріг", category: "ice", period: "10 тис. років тому", size: 2000, diet: "Травоїдний 🌿", funFact: "Також носив 'шубу' і мав два роги, передній був дуже великим.", desc: "Жив разом з мамонтами в холодних степах.", image: "celodont.jpg", icon: "🦏" },
-            { id: 12, name: "Мегатерій", category: "ice", period: "10 тис. років тому", size: 4000, diet: "Травоїдний 🌿", funFact: "Це гігантський лінивець розміром зі слона! Він не лазив по деревах.", desc: "Ходив по землі і ставав на задні лапи, щоб дістати листя з високих гілок.", image: "megatherium.jpg", icon: "🦥" },
-            { id: 13, name: "Гліптодон", category: "ice", period: "10 тис. років тому", size: 2000, diet: "Травоїдний 🌿", funFact: "Носив на спині цільний панцир, схожий на автомобіль 'Жук'.", desc: "Родич сучасних броненосців, але гігантського розміру.", image: "glypto.jpg", icon: "🐢" },
-            { id: 21, name: "Арктодус", category: "ice", period: "11 тис. років тому", size: 1000, diet: "Хижак 🥩", funFact: "Найшвидший ведмідь в історії, бігав як скаковий кінь.", desc: "Велетенський короткомордий ведмідь. Мав дуже довгі ноги, щоб наздоганяти здобич.", image: "arctodus.jpg", icon: "🐻" },
-            { id: 22, name: "Ірландський олень", category: "ice", period: "7700 років тому", size: 700, diet: "Травоїдний 🌿", funFact: "Розмах його рогів був 3.6 метри — як довжина легкового автомобіля!", desc: "Гігантський олень (Мегалоцерос). Його роги були настільки великими, що йому було важко ходити в густому лісі.", image: "irishelk.jpg", icon: "🦌" },
+            { id: 9, name: "Шерстистий Мамонт", category: "mammal", type: "Ссавець", period: "4 тис. років тому", sortDate: -4000, weight: 6000, diet: "Травоїдний 🌿", funFact: "Останні мамонти жили на острові Врангеля, коли в Єгипті вже будували піраміди!", desc: "Символ льодовикового періоду. Мав маленькі вуха, щоб вони не мерзли на холоді.", coords: [71, 179], image: "mammoth.webp", icon: "🐘" },
+            { id: 10, name: "Смілодон", category: "mammal", type: "Ссавець", period: "10 тис. років тому", sortDate: -10000, weight: 400, diet: "Хижак 🥩", funFact: "Він міг відкривати пащу на 120 градусів (ти можеш лише на 45)!", desc: "Шаблезубий тигр. Полював на бізонів і верблюдів у Північній та Південній Америці.", coords: [34, -118], image: "smilodont.webp", icon: "🐅" },
+            { id: 11, name: "Шерстистий Носоріг", category: "mammal", type: "Ссавець", period: "10 тис. років тому", sortDate: -10000, weight: 2000, diet: "Травоїдний 🌿", funFact: "Його передній ріг міг виростати до 1 метра в довжину.", desc: "Броньований танк льодовикових степів. Мав дуже товсту шкіру та густе хутро.", coords: [55, 80], image: "celodont.jpg", icon: "🦏" },
+            { id: 12, name: "Мегатерій", category: "mammal", type: "Ссавець", period: "10 тис. років тому", sortDate: -10000, weight: 4000, diet: "Травоїдний 🌿", funFact: "У нього були величезні кігті, тому він ходив, спираючись на зовнішній бік стопи.", desc: "Наземний лінивець. Жив у Південній Америці. Міг зазирнути у вікно другого поверху.", coords: [-34, -58], image: "megatherium.jpg", icon: "🦥" },
+            { id: 13, name: "Гліптодон", category: "mammal", type: "Ссавець", period: "10 тис. років тому", sortDate: -10000, weight: 2000, diet: "Травоїдний 🌿", funFact: "Його хвіст був вкритий шипами і використовувався як булава для захисту.", desc: "Гігантський родич броненосців. Його панцир був настільки міцним, що стародавні люди використовували його як дах.", coords: [-10, -55], image: "glypto.jpg", icon: "🐢" },
+            { id: 21, name: "Арктодус", category: "mammal", type: "Ссавець", period: "11 тис. років тому", sortDate: -11000, weight: 1000, diet: "Хижак 🥩", funFact: "Коли він ставав на задні лапи, його зріст досягав 3.5 метрів!", desc: "Короткомордий ведмідь. Найгрізніший хижак Північної Америки часів мамонтів.", coords: [45, -100], image: "arctodus.jpg", icon: "🐻" },
+            { id: 22, name: "Ірландський олень", category: "mammal", type: "Ссавець", period: "7700 років тому", sortDate: -7700, weight: 700, diet: "Травоїдний 🌿", funFact: "Щоб носити такі роги (40 кг), у нього були надзвичайно потужні м'язи шиї.", desc: "Мегалоцерос. Жив у Європі та Азії. Зник через зміну клімату та густі ліси.", coords: [53, -7], image: "irishelk.jpg", icon: "🦌" },
+
             // RECENT
-            { id: 14, name: "Птах Додо", category: "recent", period: "1681 рік", size: 20, diet: "Фрукти 🍎", funFact: "Не вмів літати і був дуже довірливим, бо не мав ворогів на своєму острові.", desc: "Смішний, пухкий птах з острова Маврикій. На жаль, швидко зник через людей.", image: "dodo.webp", icon: "🦤" },
-            { id: 15, name: "Стеллерова Корова", category: "recent", period: "1768 рік", size: 10000, diet: "Водорості 🌿", funFact: "Морська тварина, більша за слона, яка їла тільки морську капусту.", desc: "Була дуже повільною і доброю. Її винищили всього за 27 років після відкриття.", image: "stelle_cow.png", icon: "🐄" },
-            { id: 16, name: "Квага", category: "recent", period: "1883 рік", size: 250, diet: "Травоїдний 🌿", funFact: "Виглядала наполовину як зебра (спереду), а наполовину як кінь (ззаду).", desc: "Незвичайна родичка зебри, яка жила в Південній Африці.", image: "kwagga.jpg", icon: "🦓" },
-            { id: 17, name: "Тасманійський Вовк", category: "recent", period: "1936 рік", size: 30, diet: "Хижак 🥩", funFact: "Міг відкривати пащу неймовірно широко — на 120 градусів!", desc: "Сумчастий хижак, схожий на собаку зі смужками тигра на спині.", image: "tasm_wolf.webp", icon: "🐕" },
-            { id: 18, name: "Птах Моа", category: "recent", period: "1445 рік", size: 250, diet: "Травоїдний 🌿", funFact: "Був набагато вищим за людину і зовсім не мав крил, навіть маленьких.", desc: "Гігантський птах з Нової Зеландії. Єдиний птах в історії без крил.", image: "moa.jpeg", icon: "🐦" },
-            { id: 19, name: "Байцзі (Дельфін)", category: "recent", period: "2006 рік", size: 150, diet: "Риба 🐟", funFact: "Був майже сліпим і орієнтувався в каламутній воді за допомогою ехолокації.", desc: "Рідкісний річковий дельфін з Китаю, який зник зовсім недавно.", image: "dolphin.webp", icon: "🐬" },
-            { id: 20, name: "Мандрівний Голуб", category: "recent", period: "1914 рік", size: 0.3, diet: "Насіння 🌰", funFact: "Колись їхні зграї були такими величезними, що закривали небо на кілька годин.", desc: "Був одним з найчисленніших птахів на Землі, але люди знищили їх усіх.", image: "dove.jpg", icon: "🕊️" },
-            { id: 23, name: "Японський вовк", category: "recent", period: "1905 рік", size: 25, diet: "Хижак 🥩", funFact: "Був найменшим вовком у світі, розміром із звичайну собаку.", desc: "Маленький острівний вовк. Люди вважали його духом-охоронцем гір, але, на жаль, він зник.", image: "japanesewolf.webp", icon: "🐺" },
-            { id: 24, name: "Безкрила гагарка", category: "recent", period: "1844 рік", size: 5, diet: "Риба 🐟", funFact: "Виглядала як пінгвін, хоча жила на Півночі, де пінгвінів немає.", desc: "Великий морський птах, який не вмів літати. Чудово плавала в океані.", image: "greatauk.jpg", icon: "🐧" }
+            { id: 14, name: "Птах Додо", category: "bird", type: "Птах", period: "1681 рік", sortDate: 1681, weight: 20, diet: "Фрукти 🍎", funFact: "Додо — родич голубів, просто дуже великий і нелітаючий.", desc: "Жив на острові Маврикій. Його ім'я стало синонімом зникнення видів.", coords: [-20.3, 57.5], image: "dodo.webp", icon: "🦤" },
+            { id: 15, name: "Стеллерова Корова", category: "water", type: "Ссавець", period: "1768 рік", sortDate: 1768, weight: 10000, diet: "Водорості 🌿", funFact: "У неї зовсім не було зубів, вона перетирала їжу спеціальними пластинами.", desc: "Жила біля Командорських островів. Зникла всього через 27 років після відкриття людьми.", coords: [55, 166], image: "stelle_cow.png", icon: "🐄" },
+            { id: 16, name: "Квага", category: "mammal", type: "Ссавець", period: "1883 рік", sortDate: 1883, weight: 250, diet: "Травоїдний 🌿", funFact: "Вчені намагаються 'відродити' Квагу, відбираючи зебр з найменшою кількістю смужок.", desc: "Підвид зебри з Південної Африки. Мала коричневе забарвлення ззаду.", coords: [-30, 25], image: "kwagga.jpg", icon: "🦓" },
+            { id: 17, name: "Тасманійський Вовк", category: "mammal", type: "Ссавець", period: "1936 рік", sortDate: 1936, weight: 30, diet: "Хижак 🥩", funFact: "Останнього вовка звали Бенджамін, і він жив у зоопарку.", desc: "Тилацин. Унікальний хижак Австралії. Мав жорсткий хвіст, як у кенгуру.", coords: [-42, 147], image: "tasm_wolf.webp", icon: "🐕" },
+            { id: 18, name: "Птах Моа", category: "bird", type: "Птах", period: "1445 рік", sortDate: 1445, weight: 250, diet: "Травоїдний 🌿", funFact: "Самки Моа були майже вдвічі більші за самців.", desc: "Нова Зеландія. Був головною здобиччю орла Хааста (теж вимерлого).", coords: [-42, 172], image: "moa.jpeg", icon: "🐦" },
+            { id: 19, name: "Байцзі (Дельфін)", category: "water", type: "Ссавець", period: "2006 рік", sortDate: 2006, weight: 150, diet: "Риба 🐟", funFact: "Це перше китоподібне, яке вимерло через діяльність людини.", desc: "Річковий дельфін з річки Янцзи (Китай). Мав довгий дзьоб і був світло-блакитного кольору.", coords: [30, 115], image: "dolphin.webp", icon: "🐬" },
+            { id: 20, name: "Мандрівний Голуб", category: "bird", type: "Птах", period: "1914 рік", sortDate: 1914, weight: 0.3, diet: "Насіння 🌰", funFact: "Одна зграя могла містити більше птахів, ніж зараз людей у Нью-Йорку.", desc: "Північна Америка. Колись найчисленніший птах на Землі, винищений мисливцями.", coords: [40, -85], image: "dove.jpg", icon: "🕊️" },
+            { id: 23, name: "Японський вовк", category: "mammal", type: "Ссавець", period: "1905 рік", sortDate: 1905, weight: 25, diet: "Хижак 🥩", funFact: "Фермери колись шанували його, бо він відганяв оленів від посівів.", desc: "Маленький вовк з островів Японії. Зник через хвороби (сказ) та полювання.", coords: [36, 138], image: "japanesewolf.jpg", icon: "🐺" },
+            { id: 24, name: "Безкрила гагарка", category: "bird", type: "Птах", period: "1844 рік", sortDate: 1844, weight: 5, diet: "Риба 🐟", funFact: "Моряки називали її 'пінгвіном півночі', хоча справжні пінгвіни живуть на півдні.", desc: "Атлантичний океан. Великий нелітаючий птах. Люди полювали на неї заради пуху та м'яса.", coords: [64, -20], image: "greatauk.jpg", icon: "🐧" }
         ];
 
-        // --- IMPROVED QUIZ DATA (Specific Explanations) ---
+        // --- RESTORED FUNNY & EDUCATIONAL QUIZ DATA ---
         const quizData = [
             {
                 q: "Що було особливого у птаха Додо?",
@@ -531,51 +574,226 @@
         ];
 
         // --- APP STATE ---
-        let currentQuestionIndex = 0;
+        let currentFilter = 'all';
+        let currentSort = 'default';
+        let currentQ = 0;
         let score = 0;
 
         // --- INIT ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderGallery(animals);
-            initCharts();
+            initGlobe();
+            renderGallery();
             startQuiz();
         });
 
-        // --- FUNCTIONS ---
-        function scrollToSection(id) {
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        // --- GLOBE LOGIC (Three.js with Fallback) ---
+        function initGlobe() {
+            const container = document.getElementById('globe-container');
+            const scene = new THREE.Scene();
+            
+            // Add Starfield Background
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 1000;
+            const starPos = new Float32Array(starCount * 3);
+            for(let i=0; i<starCount*3; i++) {
+                starPos[i] = (Math.random() - 0.5) * 600;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({color: 0xffffff, size: 0.5});
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+
+            const camera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            camera.position.z = 250;
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = true;
+            controls.autoRotate = true;
+            controls.autoRotateSpeed = 0.5;
+
+            // Earth Sphere (Fallback Blue + Attempt Texture)
+            const geometry = new THREE.SphereGeometry(100, 64, 64);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x1e3a8a, // Deep Blue Ocean Fallback
+                specular: 0x333333,
+                shininess: 15
+            });
+            
+            // Attempt to load texture, but don't break if fail
+            const textureLoader = new THREE.TextureLoader();
+            // Using a CORS-friendly NASA image often used in demos or fallback
+            textureLoader.load(
+                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Earthmap1000x500.jpg/1000px-Earthmap1000x500.jpg', 
+                function(tex) {
+                    material.map = tex;
+                    material.needsUpdate = true;
+                },
+                undefined,
+                function(err) {
+                    console.log("Texture loading failed, using fallback color.");
+                }
+            );
+
+            const earth = new THREE.Mesh(geometry, material);
+            scene.add(earth);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(200, 100, 200);
+            scene.add(pointLight);
+
+            // Add Markers
+            const markerGroup = new THREE.Group();
+            scene.add(markerGroup);
+
+            function latLongToVector3(lat, lon, radius) {
+                var phi = (90 - lat) * (Math.PI / 180);
+                var theta = (lon + 180) * (Math.PI / 180);
+                var x = -(radius * Math.sin(phi) * Math.cos(theta));
+                var z = (radius * Math.sin(phi) * Math.sin(theta));
+                var y = (radius * Math.cos(phi));
+                return new THREE.Vector3(x, y, z);
+            }
+
+            animals.forEach(animal => {
+                if(!animal.coords) return;
+                const pos = latLongToVector3(animal.coords[0], animal.coords[1], 102); 
+                
+                let color = 0xffff00;
+                if(animal.category === 'dino') color = 0xef4444; 
+                if(animal.category === 'mammal' || animal.category === 'ice') color = 0x3b82f6; 
+                if(animal.category === 'recent') color = 0x22c55e; 
+
+                // Markers as slightly larger glowing dots
+                const markerGeo = new THREE.SphereGeometry(2, 16, 16);
+                const markerMat = new THREE.MeshBasicMaterial({ color: color });
+                const marker = new THREE.Mesh(markerGeo, markerMat);
+                marker.position.copy(pos);
+                marker.userData = { name: animal.name, icon: animal.icon, id: animal.id };
+                markerGroup.add(marker);
+            });
+
+            // Interaction
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            const tooltip = document.getElementById('globe-tooltip');
+
+            function onMouseMove(event) {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(markerGroup.children);
+
+                if (intersects.length > 0) {
+                    container.style.cursor = 'pointer';
+                    controls.autoRotate = false;
+                    const data = intersects[0].object.userData;
+                    tooltip.style.display = 'block';
+                    tooltip.innerHTML = `<div class="text-2xl">${data.icon}</div><div class="text-sm">${data.name}</div>`;
+                    tooltip.style.left = (event.clientX - rect.left) + 'px';
+                    tooltip.style.top = (event.clientY - rect.top) + 'px';
+                } else {
+                    container.style.cursor = 'move';
+                    controls.autoRotate = true;
+                    tooltip.style.display = 'none';
+                }
+            }
+            
+            function onMouseClick(event) {
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(markerGroup.children);
+                if (intersects.length > 0) {
+                    const id = intersects[0].object.userData.id;
+                    applyFilter('all');
+                    setTimeout(() => {
+                        const card = document.getElementById(`animal-card-${id}`);
+                        if(card) {
+                            card.scrollIntoView({behavior: "smooth", block: "center"});
+                            card.classList.add('ring-4', 'ring-emerald-400');
+                            setTimeout(() => card.classList.remove('ring-4', 'ring-emerald-400'), 2000);
+                        }
+                    }, 100);
+                }
+            }
+
+            container.addEventListener('mousemove', onMouseMove);
+            container.addEventListener('click', onMouseClick);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = container.offsetWidth / container.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+            });
         }
 
-        // 1. GALLERY
-        function renderGallery(data) {
+        // --- GALLERY LOGIC ---
+        function renderGallery() {
             const grid = document.getElementById('animal-grid');
             grid.innerHTML = '';
-            data.forEach(animal => {
-                let tagStyle = "bg-gray-200 text-gray-800";
-                if(animal.category === 'dino') tagStyle = "bg-orange-100 text-orange-800";
-                if(animal.category === 'ice') tagStyle = "bg-blue-100 text-blue-800";
-                if(animal.category === 'recent') tagStyle = "bg-red-100 text-red-800";
+            
+            let displayData = [...animals];
+
+            if (currentFilter !== 'all') {
+                displayData = displayData.filter(a => {
+                    if (currentFilter === 'dino') return a.category === 'dino';
+                    if (currentFilter === 'mammal') return a.category === 'mammal' || a.category === 'ice';
+                    if (currentFilter === 'bird') return a.category === 'bird';
+                    if (currentFilter === 'water') return a.category === 'water' || a.diet.includes('Риба');
+                    return false;
+                });
+            }
+
+            if (currentSort === 'weight-desc') displayData.sort((a,b) => b.weight - a.weight);
+            if (currentSort === 'weight-asc') displayData.sort((a,b) => a.weight - b.weight);
+            if (currentSort === 'time-old') displayData.sort((a,b) => a.sortDate - b.sortDate);
+            if (currentSort === 'time-new') displayData.sort((a,b) => b.sortDate - a.sortDate);
+
+            displayData.forEach(animal => {
+                let tagColor = "bg-gray-200 text-gray-700";
+                if(animal.category === 'dino') tagColor = "bg-red-100 text-red-800";
+                if(animal.category === 'mammal' || animal.category === 'ice') tagColor = "bg-blue-100 text-blue-800";
+                if(animal.category === 'recent') tagColor = "bg-green-100 text-green-800";
 
                 grid.innerHTML += `
-                    <div class="bg-white rounded-2xl overflow-hidden card-hover shadow-lg border border-emerald-50 flex flex-col h-full">
-                        <div class="card-img-container group">
-                            <img src="${animal.image}" alt="${animal.name}" loading="lazy" onerror="this.src='https://placehold.co/800x600/e5e7eb/A3A3A3?text=Зображення+недоступне'">
-                            <div class="absolute bottom-2 right-2 ${tagStyle} text-xs font-bold px-3 py-1 rounded-full shadow-sm opacity-90">
+                    <div id="animal-card-${animal.id}" class="animal-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                        <div class="card-img-wrapper">
+                            <img src="${animal.image}" alt="${animal.name}" loading="lazy" onerror="this.src='https://placehold.co/600x400/e2e8f0/94a3b8?text=Фото+відсутнє'">
+                            <div class="absolute top-2 right-2 ${tagColor} text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
                                 ${animal.period}
                             </div>
                         </div>
-                        <div class="p-6 flex-grow flex flex-col">
-                            <h3 class="text-xl font-black text-[#064e3b] mb-2 fun-font flex justify-between">
-                                ${animal.name} 
+                        <div class="p-5 flex-grow flex flex-col">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xl font-black text-[#064e3b] fun-font leading-tight">${animal.name}</h3>
                                 <span class="text-2xl">${animal.icon}</span>
-                            </h3>
-                            <p class="text-sm text-gray-500 mb-4 font-bold flex gap-2">
-                                <span>${animal.diet}</span> • <span>${animal.size < 1000 ? animal.size + " кг" : (animal.size/1000) + " т"}</span>
-                            </p>
-                            <p class="text-gray-700 text-sm mb-6 leading-relaxed">${animal.desc}</p>
-                            <div class="mt-auto bg-yellow-50 p-4 rounded-xl border border-yellow-100 relative">
-                                <span class="absolute -top-3 left-4 bg-yellow-400 text-[#064e3b] text-xs font-black px-2 py-1 rounded-md transform -rotate-2">ЦІКАВИНКА!</span>
-                                <p class="text-sm text-[#064e3b] italic mt-2">"${animal.funFact}"</p>
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2 text-xs font-bold text-gray-500 mb-3">
+                                <span class="bg-gray-100 px-2 py-1 rounded">⚖️ ${animal.weight < 1000 ? animal.weight + ' кг' : (animal.weight/1000) + ' т'}</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">${animal.diet}</span>
+                                <span class="bg-gray-100 px-2 py-1 rounded">📍 ${animal.type}</span>
+                            </div>
+
+                            <p class="text-sm text-gray-700 leading-snug mb-4">${animal.desc}</p>
+                            
+                            <div class="mt-auto bg-[#ecfdf5] p-3 rounded-xl border border-emerald-100">
+                                <p class="text-xs font-bold text-emerald-700 uppercase mb-1">💡 Цікавий факт:</p>
+                                <p class="text-xs text-emerald-900 italic">"${animal.funFact}"</p>
                             </div>
                         </div>
                     </div>
@@ -583,221 +801,91 @@
             });
         }
 
-        function filterAnimals(cat) {
+        function applyFilter(cat) {
+            currentFilter = cat;
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
             event.target.classList.add('filter-active');
-            cat === 'all' ? renderGallery(animals) : renderGallery(animals.filter(a => a.category === cat));
+            renderGallery();
         }
 
-        // 2. CHARTS (Including New Emoji Scatter)
-        function initCharts() {
-            // A. Weight Bar Chart
-            const top5 = [...animals].sort((a,b) => b.size - a.size).slice(0, 5);
-            new Chart(document.getElementById('weightChart'), {
-                type: 'bar',
-                data: {
-                    labels: top5.map(a=>a.name),
-                    datasets: [{ data: top5.map(a=>a.size/1000), backgroundColor: '#3b82f6', borderRadius: 8 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: {legend:{display:false}}, scales:{y:{title:{display:true, text:'Тонни'}}} }
-            });
-
-            // B. Diet Doughnut
-            let diets = {veg:0, meat:0}; animals.forEach(a => a.diet.includes("Траво") ? diets.veg++ : diets.meat++);
-            new Chart(document.getElementById('dietChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Травоїдні 🌿', 'Хижаки та інші 🥩'],
-                    datasets: [{ data: [diets.veg, diets.meat], backgroundColor: ['#4ade80', '#f87171'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, cutout:'60%', plugins:{legend:{position:'bottom'}} }
-            });
-
-            // C. EMOJI SCATTER CHART (Fixed for Emoji Rendering)
-            const ctxEmoji = document.getElementById('emojiTimelineChart').getContext('2d');
-            
-            // Map animals to scatter data
-            const timelineData = animals.map(a => ({
-                x: a.category === 'dino' ? 0 : (a.category === 'ice' ? 1 : 2),
-                y: a.size,
-                // Add slight jitter to X so icons don't overlap too much
-                jitterX: (Math.random() * 0.6 - 0.3),
-                icon: a.icon, // Store icon directly here
-                name: a.name,
-                period: a.period // Store period directly here
-            })).map(d => ({
-                x: d.x + d.jitterX,
-                y: d.y,
-                icon: d.icon, // Pass icon to dataset
-                name: d.name,
-                period: d.period // Pass period to dataset
-            }));
-
-            // Custom Plugin to draw Emojis
-            const emojiPlugin = {
-                id: 'emojiPlugin',
-                afterDatasetsDraw(chart) {
-                    const ctx = chart.ctx;
-                    chart.data.datasets.forEach((dataset, i) => {
-                        const meta = chart.getDatasetMeta(i);
-                        meta.data.forEach((element, index) => {
-                            // Access the raw data object directly
-                            const dataPoint = dataset.data[index];
-                            const x = element.x;
-                            const y = element.y;
-                            
-                            ctx.save();
-                            // Use a font stack that supports Emojis
-                            ctx.font = '24px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            
-                            // Check if icon exists, otherwise fallback
-                            const iconToDraw = dataPoint.icon || "❓";
-                            ctx.fillText(iconToDraw, x, y);
-                            ctx.restore();
-                        });
-                    });
-                }
-            };
-
-            new Chart(ctxEmoji, {
-                type: 'scatter',
-                plugins: [emojiPlugin],
-                data: {
-                    datasets: [{
-                        data: timelineData,
-                        pointRadius: 0, // Hide default dots
-                        pointHitRadius: 25 // Make area clickable
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            position: 'bottom',
-                            min: -0.5,
-                            max: 2.5,
-                            ticks: {
-                                callback: function(value) {
-                                    if(Math.abs(value - 0) < 0.2) return "Ера Динозаврів";
-                                    if(Math.abs(value - 1) < 0.2) return "Льодовиковий Період";
-                                    if(Math.abs(value - 2) < 0.2) return "Час Людей";
-                                    return "";
-                                },
-                                font: { size: 14, weight: 'bold' }
-                            },
-                            grid: { display: false }
-                        },
-                        y: {
-                            type: 'logarithmic',
-                            title: { display: true, text: 'Вага (чим вище - тим важче)' },
-                            grid: { color: '#e5e7eb' }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const item = context.raw;
-                                    return [
-                                        `${item.icon} ${item.name}`,
-                                        `Вага: ${item.y < 1000 ? item.y + ' кг' : (item.y/1000).toFixed(1) + ' т'}`,
-                                        `Період: ${item.period}` // Added Period Here
-                                    ];
-                                }
-                            },
-                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                            titleColor: '#064e3b',
-                            bodyColor: '#000',
-                            bodyFont: { size: 14, weight: 'bold' },
-                            padding: 12,
-                            borderColor: '#059669',
-                            borderWidth: 2,
-                            displayColors: false
-                        }
-                    }
-                }
-            });
+        function applySort() {
+            currentSort = document.getElementById('sort-select').value;
+            renderGallery();
         }
 
-        // 3. QUIZ LOGIC
+        function scrollToSection(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- QUIZ LOGIC ---
         function startQuiz() {
-            currentQuestionIndex = 0;
-            score = 0;
+            currentQ = 0; score = 0;
             document.getElementById('quiz-game-area').classList.remove('hidden-content');
             document.getElementById('quiz-results').classList.add('hidden-content');
-            updateScoreCounter();
-            loadQuestion();
+            loadQ();
         }
 
-        function loadQuestion() {
-            const qData = quizData[currentQuestionIndex];
-            document.getElementById('question-counter').textContent = `Питання ${currentQuestionIndex + 1} з ${quizData.length}`;
-            document.getElementById('question-text').textContent = qData.q;
-            
-            const optsContainer = document.getElementById('options-container');
-            optsContainer.innerHTML = '';
-            qData.options.forEach((opt, idx) => {
-                optsContainer.innerHTML += `<button onclick="checkAnswer(${idx})" class="quiz-option w-full text-left p-4 rounded-xl bg-gray-50 border-2 border-gray-200 font-bold text-gray-700 hover:bg-emerald-50 hover:border-emerald-300 transition">${opt}</button>`;
+        function loadQ() {
+            const q = quizData[currentQ];
+            document.getElementById('question-counter').textContent = `Питання ${currentQ + 1} з ${quizData.length}`;
+            document.getElementById('score-counter').textContent = `Бали: ${score}`;
+            document.getElementById('question-text').textContent = q.q;
+            const c = document.getElementById('options-container');
+            c.innerHTML = '';
+            q.options.forEach((o, i) => {
+                c.innerHTML += `<button onclick="check(${i})" class="quiz-option w-full text-left p-4 rounded-xl bg-gray-100 border-2 border-transparent font-bold text-gray-700 hover:border-emerald-300 transition">${o}</button>`;
             });
-
             document.getElementById('feedback-area').classList.add('hidden-content');
             document.getElementById('next-btn').classList.add('hidden-content');
-            document.getElementById('feedback-area').className = 'hidden-content bg-gray-50 p-5 rounded-xl border-l-4 mb-6 transition-all';
         }
 
-        function checkAnswer(selectedIdx) {
-            const qData = quizData[currentQuestionIndex];
-            const options = document.querySelectorAll('.quiz-option');
-            const feedbackArea = document.getElementById('feedback-area');
-            const feedbackTitle = document.getElementById('feedback-title');
-            const feedbackText = document.getElementById('feedback-text');
-
-            options.forEach(btn => btn.classList.add('disabled'));
-
-            if (selectedIdx === qData.correct) {
-                options[selectedIdx].classList.add('quiz-correct');
-                feedbackArea.classList.add('border-green-500', 'bg-green-50');
-                feedbackTitle.textContent = "✅ Правильно!";
-                feedbackTitle.className = "font-black text-xl mb-2 text-green-700";
+        function check(i) {
+            const q = quizData[currentQ];
+            const btns = document.querySelectorAll('.quiz-option');
+            btns.forEach(b => b.classList.add('disabled'));
+            const fb = document.getElementById('feedback-area');
+            
+            if(i === q.correct) {
+                btns[i].classList.add('quiz-correct');
                 score++;
+                fb.classList.remove('bg-red-50'); fb.classList.add('bg-green-50', 'border-green-500');
+                document.getElementById('feedback-title').textContent = "✅ Правильно!";
+                document.getElementById('feedback-title').className = "font-bold text-lg mb-1 text-green-700";
             } else {
-                options[selectedIdx].classList.add('quiz-wrong');
-                options[qData.correct].classList.add('quiz-correct');
-                feedbackArea.classList.add('border-red-500', 'bg-red-50');
-                feedbackTitle.textContent = "❌ Не зовсім так...";
-                feedbackTitle.className = "font-black text-xl mb-2 text-red-700";
+                btns[i].classList.add('quiz-wrong');
+                btns[q.correct].classList.add('quiz-correct');
+                fb.classList.remove('bg-green-50'); fb.classList.add('bg-red-50', 'border-red-500');
+                document.getElementById('feedback-title').textContent = "❌ Не зовсім так...";
+                document.getElementById('feedback-title').className = "font-bold text-lg mb-1 text-red-700";
             }
-
-            feedbackText.textContent = qData.explanations[selectedIdx];
-            feedbackArea.classList.remove('hidden-content');
+            document.getElementById('feedback-text').textContent = q.explanations[i];
+            fb.classList.remove('hidden-content');
             document.getElementById('next-btn').classList.remove('hidden-content');
-            updateScoreCounter();
+            document.getElementById('score-counter').textContent = `Бали: ${score}`;
         }
 
         function nextQuestion() {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < quizData.length) loadQuestion(); else showResults();
+            currentQ++;
+            if(currentQ < quizData.length) loadQ();
+            else showRes();
         }
 
-        function showResults() {
+        function showRes() {
             document.getElementById('quiz-game-area').classList.add('hidden-content');
             document.getElementById('quiz-results').classList.remove('hidden-content');
             document.getElementById('final-score').textContent = score;
-            let msg = "";
-            if (score === 24) msg = "Неймовірно! Ти справжній палеонтолог-експерт! 🦖🎓";
-            else if (score >= 18) msg = "Чудовий результат! 👍";
-            else if (score >= 12) msg = "Непогано! Але ще є що вивчати. 🧐";
-            else msg = "Спробуй ще раз! 😉";
-            document.getElementById('result-message').textContent = msg;
+            let m = score === 24 ? "Ти ГЕНІЙ! 🦖" : (score > 18 ? "Чудово! 😎" : "Спробуй ще! 😉");
+            document.getElementById('result-message').textContent = m;
         }
 
-        function updateScoreCounter() {
-            document.getElementById('score-counter').textContent = `Бали: ${score}`;
+        // --- MAILBOX ---
+        function sendRequest() {
+            const val = document.getElementById('animal-request-input').value;
+            const dadEmail = "dad.rising@outlook.com";
+            if(val) {
+                window.location.href = `mailto:${dadEmail}?subject=Нова тварина&body=Привіт! Додай, будь ласка: ${val}`;
+                document.getElementById('request-sent-msg').classList.remove('hidden-content');
+            } else alert("Напиши назву!");
         }
     </script>
 </body>
