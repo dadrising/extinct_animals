@@ -9,6 +9,13 @@
     <script>
         tailwind.config = {
             darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
         }
     </script>
     <!-- Google Fonts -->
@@ -41,21 +48,25 @@
                 <span class="font-heading font-bold text-xl md:text-2xl text-amber-500">PaleoWorld</span>
             </div>
             
-            <div class="flex items-center gap-4 md:gap-6">
+            <div class="flex items-center gap-3 md:gap-6">
+                <!-- Кнопка Додати Тварину (Нова) -->
+                <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400">
+                    <span class="text-xl">+</span> Додати тварину
+                </button>
+
                 <button onclick="app.navigate('encyclopedia')" class="hover:text-amber-400 transition font-semibold hidden md:block">Енциклопедія</button>
                 <button onclick="app.navigate('quiz')" class="hover:text-amber-400 transition font-semibold hidden md:block">Вікторина</button>
                 
                 <!-- Theme Toggle Button -->
                 <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-slate-700 transition focus:outline-none" title="Змінити тему">
-                    <!-- Sun Icon (for Dark Mode) -->
                     <svg id="sun-icon" class="w-6 h-6 hidden text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <!-- Moon Icon (for Light Mode) -->
                     <svg id="moon-icon" class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
             </div>
         </div>
-        <!-- Mobile Menu (Simple) -->
-        <div class="md:hidden flex justify-around py-2 bg-slate-800 dark:bg-slate-900 border-t border-slate-700">
+        <!-- Mobile Menu -->
+        <div class="md:hidden flex flex-wrap justify-around py-2 bg-slate-800 dark:bg-slate-900 border-t border-slate-700">
+            <button onclick="app.openAddAnimalModal()" class="w-full mb-2 mx-4 bg-green-600 text-white py-1 rounded-lg text-sm font-bold">➕ Додати тварину</button>
             <button onclick="app.navigate('encyclopedia')" class="text-sm font-semibold hover:text-amber-400">📚 Енциклопедія</button>
             <button onclick="app.navigate('quiz')" class="text-sm font-semibold hover:text-amber-400">🧠 Вікторина</button>
         </div>
@@ -71,10 +82,88 @@
         <p>© 2023 PaleoWorld. Інтерактивна освітня платформа.</p>
     </footer>
 
-    <!-- Модальне вікно -->
+    <!-- Модальне вікно ПЕРЕГЛЯДУ -->
     <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300" onclick="app.closeModal(event)">
         <div id="modal-content" class="bg-white dark:bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all scale-95 opacity-0">
             <!-- Content via JS -->
+        </div>
+    </div>
+
+    <!-- Модальне вікно ДОДАВАННЯ (Нове) -->
+    <div id="add-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
+            <button onclick="app.closeAddModal()" class="absolute top-4 right-4 text-slate-500 hover:text-red-500 dark:text-slate-400 text-2xl font-bold">✕</button>
+            
+            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+                <span class="bg-green-100 text-green-600 p-2 rounded-lg">➕</span> Додати нову тварину
+            </h2>
+            
+            <form id="add-animal-form" onsubmit="app.handleAnimalSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Назва тварини</label>
+                        <input type="text" name="name" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Наприклад: Велоцираптор">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Категорія</label>
+                        <select name="category" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                            <option value="dino">Динозавр 🦕</option>
+                            <option value="reptile">Рептилія 🦎</option>
+                            <option value="water">Водний 🦈</option>
+                            <option value="bird">Птах 🦅</option>
+                            <option value="mammal">Ссавець 🦣</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Тип (підзаголовок)</label>
+                        <input type="text" name="type" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижий динозавр">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Період</label>
+                        <input type="text" name="period" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: 75 млн років тому">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Вага (кг)</label>
+                        <input type="number" name="weight" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="1000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Дієта</label>
+                        <input type="text" name="diet" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижак 🥩">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Опис</label>
+                    <textarea name="desc" rows="3" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Детальний опис тварини..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Цікавий факт</label>
+                    <textarea name="funFact" rows="2" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Чи знали ви, що..."></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Іконка (Емодзі)</label>
+                        <input type="text" name="icon" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="🦖">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Зображення</label>
+                        <input type="file" id="animal-image-input" accept="image/*" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <p class="text-xs text-slate-500 mt-1">Виберіть файл зображення.</p>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-[1.02] mt-4">
+                    Зберегти та Надіслати ✉️
+                </button>
+            </form>
         </div>
     </div>
 
@@ -88,10 +177,12 @@
                 view: 'home',
                 searchTerm: '',
                 categoryFilter: 'all',
+                currentQuizQuestions: [], // Для 10 випадкових питань
                 quizIndex: 0,
                 score: 0,
                 quizAnswered: false,
-                isDark: false
+                isDark: false,
+                customAnimals: [] // Для нових тварин
             },
 
             init() {
@@ -107,12 +198,34 @@
                         </div>`;
                     return;
                 }
+
+                // Завантаження локальних тварин
+                this.loadCustomAnimals();
+
                 this.render();
+            },
+
+            loadCustomAnimals() {
+                const stored = localStorage.getItem('paleo_custom_animals');
+                if (stored) {
+                    try {
+                        this.state.customAnimals = JSON.parse(stored);
+                        // Додаємо нових тварин до основного списку window.animals для відображення
+                        // (Робимо це обережно, щоб не дублювати при перезавантаженні сторінки)
+                        // Найпростіший спосіб - просто злити масиви при рендерінгу
+                    } catch (e) {
+                        console.error("Помилка читання LocalStorage", e);
+                    }
+                }
+            },
+
+            getAllAnimals() {
+                // Об'єднуємо базу з JS файлу та локальні дані
+                return [...(window.animals || []), ...this.state.customAnimals];
             },
 
             // --- THEME LOGIC ---
             initTheme() {
-                // 1. Check local storage or system preference
                 const userPref = localStorage.getItem('theme');
                 const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
@@ -152,16 +265,30 @@
 
             navigate(view) {
                 this.state.view = view;
+                
                 if (view === 'quiz') {
-                    this.state.quizIndex = 0;
-                    this.state.score = 0;
-                    this.state.quizAnswered = false;
+                    this.startNewQuiz();
                 }
+                
                 if (view === 'encyclopedia') {
                     this.state.searchTerm = '';
                     this.state.categoryFilter = 'all';
                 }
                 this.render();
+            },
+
+            startNewQuiz() {
+                this.state.quizIndex = 0;
+                this.state.score = 0;
+                this.state.quizAnswered = false;
+                
+                // Перемішуємо всі питання і беремо перші 10
+                if (window.quizData && window.quizData.length > 0) {
+                    const shuffled = [...window.quizData].sort(() => 0.5 - Math.random());
+                    this.state.currentQuizQuestions = shuffled.slice(0, 10);
+                } else {
+                    this.state.currentQuizQuestions = [];
+                }
             },
 
             render() {
@@ -176,7 +303,8 @@
             },
 
             renderHome(container) {
-                const count = window.animals.length;
+                const allAnimals = this.getAllAnimals();
+                const count = allAnimals.length;
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
                         <div class="text-8xl mb-6 animate-bounce">🦖</div>
@@ -202,11 +330,16 @@
             },
 
             renderEncyclopedia(container) {
-                const filtered = window.animals.filter(a => {
+                const allAnimals = this.getAllAnimals();
+                const filtered = allAnimals.filter(a => {
                     const matchSearch = a.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
                     const matchCat = this.state.categoryFilter === 'all' || a.category === this.state.categoryFilter;
                     return matchSearch && matchCat;
                 });
+
+                // Сортуємо: нові (з великими ID) перші, або просто за порядком
+                // Для зручності покажемо доданих користувачем першими (якщо вони є)
+                // Але стандартно просто рендеримо масив.
 
                 container.innerHTML = `
                     <div class="fade-in">
@@ -240,10 +373,14 @@
             },
 
             createAnimalCard(animal) {
+                // Перевірка, чи це зображення Base64 (від користувача) чи шлях до файлу
+                const isBase64 = animal.image && animal.image.startsWith('data:image');
+                const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
+
                 return `
                     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-100 dark:border-slate-700 overflow-hidden card-hover cursor-pointer flex flex-col h-full" onclick="app.openModal(${animal.id})">
                         <div class="h-48 w-full bg-slate-200 dark:bg-slate-700 relative flex items-center justify-center overflow-hidden">
-                             <img src="images/${animal.image}" alt="${animal.name}" class="w-full h-full object-cover absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                             <img src="${imageSrc}" alt="${animal.name}" class="w-full h-full object-cover absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                              <div class="hidden w-full h-full absolute inset-0 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-slate-700 dark:to-slate-600 items-center justify-center text-8xl z-0">${animal.icon}</div>
                              <span class="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-md z-20">${animal.type}</span>
                         </div>
@@ -272,15 +409,20 @@
             setFilter(cat) { this.state.categoryFilter = cat; this.render(); },
 
             openModal(id) {
-                const animal = window.animals.find(a => a.id === id);
+                const allAnimals = this.getAllAnimals();
+                const animal = allAnimals.find(a => a.id === id);
                 if (!animal) return;
+                
+                const isBase64 = animal.image && animal.image.startsWith('data:image');
+                const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
+
                 const modal = document.getElementById('modal-backdrop');
                 const content = document.getElementById('modal-content');
                 content.innerHTML = `
                     <div class="relative">
                         <button onclick="app.closeModal()" class="absolute top-4 right-4 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-full p-2 shadow-lg z-20 hover:bg-slate-100 dark:hover:bg-slate-600 transition">✕</button>
                         <div class="h-64 md:h-80 w-full bg-slate-200 dark:bg-slate-700 relative overflow-hidden">
-                             <img src="images/${animal.image}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                             <img src="${imageSrc}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
                              <div class="hidden w-full h-full bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600 items-center justify-center text-9xl">${animal.icon}</div>
                              <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent p-6 pt-20">
                                 <h2 class="text-3xl md:text-4xl font-bold text-white mb-1">${animal.name}</h2>
@@ -317,10 +459,103 @@
                 setTimeout(() => { modal.classList.add('hidden'); }, 300);
             },
 
+            // --- ДОДАВАННЯ ТВАРИНИ (MODAL) ---
+            openAddAnimalModal() {
+                document.getElementById('add-modal-backdrop').classList.remove('hidden');
+            },
+
+            closeAddModal() {
+                document.getElementById('add-modal-backdrop').classList.add('hidden');
+            },
+
+            async handleAnimalSubmit(e) {
+                e.preventDefault();
+                const form = e.target;
+                
+                // Зчитування даних форми
+                const newAnimal = {
+                    id: Date.now(), // Унікальний ID
+                    name: form.name.value,
+                    category: form.category.value,
+                    type: form.type.value,
+                    period: form.period.value,
+                    weight: Number(form.weight.value),
+                    diet: form.diet.value,
+                    desc: form.desc.value,
+                    funFact: form.funFact.value,
+                    icon: form.icon.value,
+                    image: 'placeholder.jpg', // Тимчасове значення
+                    coords: [0, 0] // Дефолтні координати
+                };
+
+                // Обробка зображення (File to Base64)
+                const fileInput = document.getElementById('animal-image-input');
+                if (fileInput.files && fileInput.files[0]) {
+                    try {
+                        newAnimal.image = await this.toBase64(fileInput.files[0]);
+                    } catch (err) {
+                        console.error("Помилка фото:", err);
+                        alert("Не вдалося завантажити фото. Буде використано заглушку.");
+                    }
+                }
+
+                // Збереження в LocalStorage
+                this.state.customAnimals.push(newAnimal);
+                localStorage.setItem('paleo_custom_animals', JSON.stringify(this.state.customAnimals));
+
+                // Відправка Email (Mailto)
+                const mailSubject = encodeURIComponent(`Нова тварина: ${newAnimal.name}`);
+                const mailBody = encodeURIComponent(
+`Додано нову тварину на сайт!
+
+Ім'я: ${newAnimal.name}
+Тип: ${newAnimal.type}
+Період: ${newAnimal.period}
+Вага: ${newAnimal.weight} кг
+Дієта: ${newAnimal.diet}
+Опис: ${newAnimal.desc}
+Факт: ${newAnimal.funFact}
+
+(Фото збережено локально у браузері)`
+                );
+                
+                // Відкриваємо поштовий клієнт
+                window.location.href = `mailto:dad.rising@outlook.com?subject=${mailSubject}&body=${mailBody}`;
+
+                // Оновлення інтерфейсу
+                alert('Тварину збережено! Ваша поштова програма повинна відкритися для відправки звіту.');
+                form.reset();
+                this.closeAddModal();
+                this.navigate('encyclopedia'); // Перехід до списку, щоб побачити нову тварину
+            },
+
+            toBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            },
+
+            // --- QUIZ LOGIC (Random 10) ---
             renderQuiz(container) {
-                if (this.state.quizIndex >= window.quizData.length) { this.renderQuizResult(container); return; }
-                const q = window.quizData[this.state.quizIndex];
-                const progress = ((this.state.quizIndex) / window.quizData.length) * 100;
+                const questions = this.state.currentQuizQuestions;
+                
+                // Якщо питань немає (помилка) або пройшли всі
+                if (questions.length === 0) {
+                     container.innerHTML = `<div class="text-center mt-10">Завантаження питань...</div>`;
+                     return;
+                }
+
+                if (this.state.quizIndex >= questions.length) { 
+                    this.renderQuizResult(container); 
+                    return; 
+                }
+
+                const q = questions[this.state.quizIndex];
+                const progress = ((this.state.quizIndex) / questions.length) * 100;
+                
                 container.innerHTML = `
                     <div class="max-w-2xl mx-auto fade-in pt-4">
                         <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 mb-6">
@@ -328,7 +563,7 @@
                         </div>
                         <div class="bg-white dark:bg-slate-800 p-6 md:p-10 rounded-2xl shadow-lg border-b-4 border-slate-200 dark:border-slate-700">
                             <div class="flex justify-between text-slate-400 text-sm font-bold uppercase tracking-wider mb-4">
-                                <span>Питання ${this.state.quizIndex + 1} / ${window.quizData.length}</span>
+                                <span>Питання ${this.state.quizIndex + 1} / ${questions.length}</span>
                                 <span>Очки: ${this.state.score}</span>
                             </div>
                             <h3 class="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white mb-8">${q.q}</h3>
@@ -348,8 +583,11 @@
             handleAnswer(idx) {
                 if (this.state.quizAnswered) return;
                 this.state.quizAnswered = true;
-                const q = window.quizData[this.state.quizIndex];
+                
+                const questions = this.state.currentQuizQuestions;
+                const q = questions[this.state.quizIndex];
                 const isCorrect = idx === q.correct;
+                
                 if (isCorrect) this.state.score++;
                 
                 const btns = document.querySelectorAll('#options-container button');
@@ -375,10 +613,15 @@
                 document.getElementById('next-btn').classList.remove('hidden');
             },
 
-            nextQuestion() { this.state.quizIndex++; this.state.quizAnswered = false; this.renderQuiz(document.getElementById('app')); },
+            nextQuestion() { 
+                this.state.quizIndex++; 
+                this.state.quizAnswered = false; 
+                this.renderQuiz(document.getElementById('app')); 
+            },
 
             renderQuizResult(container) {
-                const percent = (this.state.score / window.quizData.length) * 100;
+                const total = this.state.currentQuizQuestions.length;
+                const percent = (this.state.score / total) * 100;
                 let msg = "", emoji = "";
                 if (percent === 100) { msg = "Легендарний Палеонтолог!"; emoji = "🏆"; }
                 else if (percent >= 80) { msg = "Експерт Юрського періоду!"; emoji = "🦕"; }
@@ -390,7 +633,7 @@
                         <div class="text-9xl mb-4">${emoji}</div>
                         <h2 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">${msg}</h2>
                         <p class="text-slate-500 dark:text-slate-400 mb-6">Ваш результат:</p>
-                        <div class="text-6xl font-black text-amber-500 mb-6">${this.state.score} <span class="text-2xl text-slate-300 dark:text-slate-600 font-normal">/ ${window.quizData.length}</span></div>
+                        <div class="text-6xl font-black text-amber-500 mb-6">${this.state.score} <span class="text-2xl text-slate-300 dark:text-slate-600 font-normal">/ ${total}</span></div>
                         <div class="flex gap-4">
                             <button onclick="app.navigate('home')" class="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-3 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition">Меню</button>
                             <button onclick="app.navigate('quiz')" class="flex-1 bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600 transition">Спробувати ще</button>
