@@ -1,6 +1,6 @@
 // =============================================================================
-// РОЗШИРЕНА АНІМАЦІЯ ФОНУ v2.0
-// Ефекти: particles, fireflies, embers, dino_world, dna_flow, geometry, asteroids
+// РОЗШИРЕНА АНІМАЦІЯ ФОНУ v3.0
+// Ефекти: particles, embers, dino_world, geometry, asteroids, spiral, snow, warp, matrix
 // =============================================================================
 
 const bgAnimation = {
@@ -10,10 +10,12 @@ const bgAnimation = {
     mouse: { x: null, y: null },
     effectName: 'particles',
     
-    // Список доступних ефектів
-    effects: ['particles', 'fireflies', 'embers', 'dino_world', 'dna_flow', 'geometry', 'asteroids'],
+    // Оновлений список ефектів
+    effects: ['particles', 'embers', 'dino_world', 'geometry', 'asteroids', 'spiral', 'snow', 'warp', 'matrix'],
     
     animationFrameId: null,
+    cols: 0, // Для матриці
+    yPos: [], // Для матриці
 
     init() {
         this.canvas = document.getElementById('bg-canvas');
@@ -60,23 +62,15 @@ const bgAnimation = {
         this.particles = [];
         let count = (window.innerWidth * window.innerHeight) / 9000;
 
-        if (this.effectName === 'dna_flow') {
-            // Для ДНК створюємо "пари" основ
-            count = window.innerWidth / 30; // Кількість ланок
-            for (let i = 0; i < count; i++) {
-                this.particles.push({
-                    x: i * 30, // Рівномірний розподіл по X
-                    baseY: Math.random() * this.canvas.height, // Випадкова висота для різних ниток, якщо їх декілька
-                    angle: i * 0.2, // Зсув фази для спіралі
-                    speed: 0.02,
-                    type: 'base_pair'
-                });
-            }
-            return; // Спеціальний вихід для ДНК
-        }
+        if (this.effectName === 'asteroids') count /= 2;
+        if (this.effectName === 'warp') count = 200; // Фіксована кількість зірок
+        if (this.effectName === 'snow') count *= 1.5; // Більше сніжинок
 
-        if (this.effectName === 'asteroids') {
-            count /= 2; // Менше об'єктів
+        if (this.effectName === 'matrix') {
+            // Налаштування для Матриці
+            this.cols = Math.floor(this.canvas.width / 20);
+            this.yPos = Array(this.cols).fill(0);
+            return;
         }
 
         const icons = ['🦕', '🦖', '🌿', '🦴', '🥚', '🌋', '🐾', '🌴', '🦟'];
@@ -94,43 +88,47 @@ const bgAnimation = {
                 spinSpeed: (Math.random() - 0.5) * 0.02,
                 icon: icons[Math.floor(Math.random() * icons.length)],
                 shapeType: Math.floor(Math.random() * 3),
+                depth: Math.random() * 0.5 + 0.5,
+                wobble: Math.random() * Math.PI * 2,
                 
                 // Для нових ефектів
-                depth: Math.random() * 0.5 + 0.5, // Глибина для паралаксу
-                wobble: Math.random() * Math.PI * 2, // Для погойдування
+                z: Math.random() * this.canvas.width, // Глибина для Warp
+                radius: Math.random() * 200 + 50, // Для Spiral
+                spiralAngle: Math.random() * Math.PI * 2,
                 type: 'standard'
             };
 
             // Налаштування
-            if (this.effectName === 'fireflies') {
-                p.speedX = (Math.random() - 0.5) * 2;
-                p.speedY = (Math.random() - 0.5) * 2;
-            } 
-            else if (this.effectName === 'embers') {
+            if (this.effectName === 'embers') {
                 p.speedY = -(Math.random() * 1 + 0.5);
                 p.size = Math.random() * 4 + 1;
             } 
             else if (this.effectName === 'dino_world') {
-                p.size = (Math.random() * 20 + 10) * p.depth; // Розмір залежить від глибини
-                p.speedX = (Math.random() - 0.5) * 0.5 * p.depth; // Швидкість залежить від глибини
+                p.size = (Math.random() * 20 + 10) * p.depth;
+                p.speedX = (Math.random() - 0.5) * 0.5 * p.depth;
                 p.speedY = (Math.random() - 0.5) * 0.5 * p.depth;
             }
             else if (this.effectName === 'asteroids') {
-                // Створюємо або астероїд, або зірку
                 if (Math.random() > 0.9) {
-                    p.type = 'star'; // Падаюча зірка
+                    p.type = 'star';
                     p.x = Math.random() * this.canvas.width;
-                    p.y = Math.random() * this.canvas.height * 0.5; // Тільки зверху
+                    p.y = Math.random() * this.canvas.height * 0.5;
                     p.size = Math.random() * 2 + 1;
-                    p.speedX = -4 - Math.random() * 4; // Швидко вліво
-                    p.speedY = 2 + Math.random() * 4;  // Швидко вниз
+                    p.speedX = -4 - Math.random() * 4;
+                    p.speedY = 2 + Math.random() * 4;
                 } else {
-                    p.type = 'asteroid'; // Астероїд
+                    p.type = 'asteroid';
                     p.icon = rocks[Math.floor(Math.random() * rocks.length)];
                     p.size = Math.random() * 15 + 5;
                     p.speedX = (Math.random() - 0.5) * 0.2;
                     p.speedY = (Math.random() - 0.5) * 0.2;
                 }
+            }
+            else if (this.effectName === 'snow') {
+                p.speedY = Math.random() * 2 + 1; // Падіння вниз
+                p.speedX = (Math.random() - 0.5) * 0.5; // Легкий вітер
+                p.size = Math.random() * 3 + 2;
+                p.opacity = Math.random() * 0.8 + 0.2;
             }
 
             this.particles.push(p);
@@ -138,14 +136,23 @@ const bgAnimation = {
     },
 
     animate() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Для Матриці та Warp потрібен ефект "шлейфу"
+        if (this.effectName === 'matrix' || this.effectName === 'warp') {
+            this.ctx.fillStyle = document.documentElement.classList.contains('dark') ? 'rgba(15, 23, 42, 0.1)' : 'rgba(248, 250, 252, 0.1)';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        } else {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
         const isDark = document.documentElement.classList.contains('dark');
-        
         let r = 100, g = 116, b = 139; // Slate
         if (isDark) { r = 245; g = 158; b = 11; } // Amber
 
-        if (this.effectName === 'dna_flow') {
-            this.animateDNA(r, g, b, isDark);
+        // Спеціальні рендери
+        if (this.effectName === 'matrix') {
+            this.animateMatrix(isDark);
+        } else if (this.effectName === 'warp') {
+            this.animateWarp(isDark);
         } else {
             this.animateParticles(r, g, b, isDark);
         }
@@ -153,78 +160,112 @@ const bgAnimation = {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
     },
 
-    // --- ЛОГІКА ДНК (Double Helix) ---
-    animateDNA(r, g, b, isDark) {
-        const centerY = this.canvas.height / 2;
-        const amplitude = 60; // Висота спіралі
-        
-        // Колір ліній
-        this.ctx.lineWidth = 2;
-        
+    // --- MATRIX EFFECT ---
+    animateMatrix(isDark) {
+        this.ctx.fillStyle = isDark ? '#0F0' : '#000'; // Зелений або Чорний
+        this.ctx.font = '15px monospace';
+
+        for (let i = 0; i < this.cols; i++) {
+            const text = String.fromCharCode(Math.random() * 128);
+            const x = i * 20;
+            const y = this.yPos[i];
+
+            this.ctx.fillText(text, x, y);
+
+            if (y > this.canvas.height && Math.random() > 0.975) {
+                this.yPos[i] = 0;
+            } else {
+                this.yPos[i] += 20;
+            }
+        }
+    },
+
+    // --- WARP SPEED EFFECT ---
+    animateWarp(isDark) {
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+
+        this.ctx.fillStyle = isDark ? '#FFF' : '#333';
+
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
             
-            // Рух
-            p.angle += p.speed;
-            
-            // Позиції двох ниток
-            const y1 = centerY + Math.sin(p.angle) * amplitude;
-            const y2 = centerY + Math.sin(p.angle + Math.PI) * amplitude; // Зсув на 180 градусів
-            
-            // Колір (в темній темі - неоновий, в світлій - темний)
-            const color = isDark ? `rgba(99, 102, 241, 0.6)` : `rgba(71, 85, 105, 0.6)`; // Indigo / Slate
-            
-            // 1. Малюємо перемичку (базову пару)
-            this.ctx.beginPath();
-            this.ctx.moveTo(p.x, y1);
-            this.ctx.lineTo(p.x, y2);
-            this.ctx.strokeStyle = isDark ? `rgba(99, 102, 241, 0.2)` : `rgba(71, 85, 105, 0.2)`;
-            this.ctx.stroke();
+            // Рух на камеру (зменшення Z)
+            p.z -= 10; // Швидкість польоту
+            if (p.z <= 0) {
+                p.z = this.canvas.width;
+                p.x = Math.random() * this.canvas.width;
+                p.y = Math.random() * this.canvas.height;
+            }
 
-            // 2. Малюємо точки (нуклеотиди)
-            // Верхня нитка
+            // Проекція 3D на 2D
+            const sx = (p.x - cx) * (this.canvas.width / p.z) + cx;
+            const sy = (p.y - cy) * (this.canvas.width / p.z) + cy;
+            const size = (1 - p.z / this.canvas.width) * 4;
+
             this.ctx.beginPath();
-            this.ctx.arc(p.x, y1, 4, 0, Math.PI * 2);
-            this.ctx.fillStyle = isDark ? '#818cf8' : '#334155';
-            this.ctx.fill();
-            
-            // Нижня нитка
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, y2, 4, 0, Math.PI * 2);
-            this.ctx.fillStyle = isDark ? '#c084fc' : '#475569';
+            this.ctx.arc(sx, sy, size > 0 ? size : 0, 0, Math.PI * 2);
             this.ctx.fill();
         }
     },
 
-    // --- СТАНДАРТНА ЛОГІКА ЧАСТИНОК ---
+    // --- STANDARD PARTICLES (Includes Spiral, Snow, etc.) ---
     animateParticles(r, g, b, isDark) {
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
 
+            // --- SPIRAL LOGIC ---
+            if (this.effectName === 'spiral') {
+                p.spiralAngle += 0.01; // Обертання всієї галактики
+                p.radius += Math.sin(p.spiralAngle) * 0.5; // Пульсація
+                
+                // Координати по спіралі
+                p.currentX = cx + Math.cos(p.spiralAngle + p.angle) * p.radius;
+                p.currentY = cy + Math.sin(p.spiralAngle + p.angle) * p.radius;
+                
+                // Малюємо
+                this.ctx.beginPath();
+                this.ctx.arc(p.currentX, p.currentY, p.size, 0, Math.PI * 2);
+                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
+                this.ctx.fill();
+                continue; // Пропускаємо стандартний рух
+            }
+
+            // --- SNOW LOGIC ---
+            if (this.effectName === 'snow') {
+                p.y += p.speedY;
+                p.x += Math.sin(p.y * 0.01) * 0.5; // Погойдування
+                
+                if (p.y > this.canvas.height) {
+                    p.y = -10;
+                    p.x = Math.random() * this.canvas.width;
+                }
+                
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                this.ctx.fillStyle = isDark ? `rgba(255, 255, 255, ${p.opacity})` : `rgba(100, 116, 139, ${p.opacity})`;
+                this.ctx.fill();
+                continue;
+            }
+
+            // --- ASTEROIDS LOGIC ---
             if (this.effectName === 'asteroids') {
                 if (p.type === 'star') {
-                    // Падаюча зірка
-                    p.x += p.speedX;
-                    p.y += p.speedY;
-                    p.opacity -= 0.005; // Згасає
-
-                    // Малюємо хвіст
+                    p.x += p.speedX; p.y += p.speedY; p.opacity -= 0.005;
                     this.ctx.beginPath();
                     this.ctx.moveTo(p.x, p.y);
                     this.ctx.lineTo(p.x - p.speedX * 3, p.y - p.speedY * 3);
                     this.ctx.strokeStyle = isDark ? `rgba(255, 255, 255, ${p.opacity})` : `rgba(0,0,0, ${p.opacity})`;
                     this.ctx.lineWidth = 2;
                     this.ctx.stroke();
-
-                    // Скидання зірки
                     if (p.x < -50 || p.y > this.canvas.height + 50 || p.opacity <= 0) {
-                        p.x = Math.random() * this.canvas.width + 200;
-                        p.y = -50;
-                        p.opacity = 1;
+                        p.x = Math.random() * this.canvas.width + 200; p.y = -50; p.opacity = 1;
                     }
                     continue;
                 } else {
-                    // Астероїд
                     this.ctx.save();
                     this.ctx.translate(p.x, p.y);
                     this.ctx.rotate(p.angle);
@@ -233,12 +274,7 @@ const bgAnimation = {
                     this.ctx.textBaseline = 'middle';
                     this.ctx.fillText(p.icon, 0, 0);
                     this.ctx.restore();
-                    
-                    p.x += p.speedX;
-                    p.y += p.speedY;
-                    p.angle += p.spinSpeed;
-                    
-                    // Wrap edges
+                    p.x += p.speedX; p.y += p.speedY; p.angle += p.spinSpeed;
                     if (p.x > this.canvas.width + 20) p.x = -20;
                     if (p.x < -20) p.x = this.canvas.width + 20;
                     if (p.y > this.canvas.height + 20) p.y = -20;
@@ -247,69 +283,11 @@ const bgAnimation = {
                 }
             }
 
-            // Стандартний рух для інших режимів
-            if (this.effectName === 'dino_world') {
-                p.x += p.speedX;
-                p.y += p.speedY;
-                // Плавне погойдування (sine wave wobble)
-                p.wobble += 0.02;
-                let wobbleY = Math.sin(p.wobble) * 0.5; 
-                
-                // Малювання Емодзі
-                this.ctx.save();
-                this.ctx.translate(p.x, p.y + wobbleY);
-                this.ctx.rotate(p.angle + Math.sin(p.wobble) * 0.1); // Легкий нахил
-                this.ctx.font = `${p.size}px serif`;
-                // Тінь для об'єму
-                this.ctx.shadowColor = "rgba(0,0,0,0.1)";
-                this.ctx.shadowBlur = 5;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(p.icon, 0, 0);
-                this.ctx.restore();
-            } 
-            else if (this.effectName === 'geometry') {
-                p.x += p.speedX;
-                p.y += p.speedY;
-                p.angle += p.spinSpeed;
-                
-                this.ctx.save();
-                this.ctx.translate(p.x, p.y);
-                this.ctx.rotate(p.angle);
-                this.ctx.beginPath();
-                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                this.ctx.lineWidth = 1.5;
-                
-                if (p.shapeType === 0) this.ctx.rect(-p.size, -p.size, p.size*2, p.size*2);
-                else if (p.shapeType === 1) {
-                    this.ctx.moveTo(0, -p.size);
-                    this.ctx.lineTo(p.size, p.size);
-                    this.ctx.lineTo(-p.size, p.size);
-                    this.ctx.closePath();
-                } else this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                
-                this.ctx.stroke();
-                this.ctx.restore();
-            }
-            else {
-                // Particles / Fireflies / Embers
-                if (this.effectName === 'fireflies') {
-                    p.angle += p.spinSpeed;
-                    p.x += Math.cos(p.angle) * 0.5;
-                    p.y += Math.sin(p.angle) * 0.5;
-                    p.opacity += Math.sin(Date.now() * 0.005 + p.x) * 0.01;
-                } else {
-                    p.x += p.speedX;
-                    p.y += p.speedY;
-                }
+            // --- STANDARD MOVEMENT (Embers, Particles, Geometry, Dino) ---
+            p.x += p.speedX;
+            p.y += p.speedY;
 
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                this.ctx.fill();
-            }
-
-            // Wrap edges (General)
+            // Wrap edges
             if (this.effectName === 'embers') {
                 if (p.y < -10) { p.y = this.canvas.height + 10; p.x = Math.random() * this.canvas.width; }
             } else {
@@ -319,7 +297,51 @@ const bgAnimation = {
                 if (p.y < -50) p.y = this.canvas.height + 50;
             }
 
-            // Connections (Only for standard particles)
+            // Dino World specifics
+            if (this.effectName === 'dino_world') {
+                p.wobble += 0.02;
+                let wobbleY = Math.sin(p.wobble) * 0.5;
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y + wobbleY);
+                this.ctx.rotate(p.angle + Math.sin(p.wobble) * 0.1);
+                this.ctx.font = `${p.size}px serif`;
+                this.ctx.shadowColor = "rgba(0,0,0,0.1)";
+                this.ctx.shadowBlur = 5;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(p.icon, 0, 0);
+                this.ctx.restore();
+                continue;
+            }
+
+            // Geometry specifics
+            if (this.effectName === 'geometry') {
+                p.angle += p.spinSpeed;
+                this.ctx.save();
+                this.ctx.translate(p.x, p.y);
+                this.ctx.rotate(p.angle);
+                this.ctx.beginPath();
+                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
+                this.ctx.lineWidth = 1.5;
+                if (p.shapeType === 0) this.ctx.rect(-p.size, -p.size, p.size*2, p.size*2);
+                else if (p.shapeType === 1) {
+                    this.ctx.moveTo(0, -p.size);
+                    this.ctx.lineTo(p.size, p.size);
+                    this.ctx.lineTo(-p.size, p.size);
+                    this.ctx.closePath();
+                } else this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.restore();
+                continue;
+            }
+
+            // Basic Particles / Embers
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
+            this.ctx.fill();
+
+            // Connections
             if (this.effectName === 'particles' && this.mouse.x != null) {
                 const dx = p.x - this.mouse.x;
                 const dy = p.y - this.mouse.y;
