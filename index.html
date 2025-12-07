@@ -80,8 +80,9 @@
     </main>
 
     <!-- Футер -->
-    <footer class="bg-slate-800 text-slate-400 py-6 text-center dark:bg-slate-950">
-        <p>© 2023 PaleoWorld. Інтерактивна освітня платформа.</p>
+    <footer class="bg-slate-800 text-slate-400 py-6 text-center dark:bg-slate-950 text-sm">
+        <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
+        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.1</p>
     </footer>
 
     <!-- Модальне вікно ПЕРЕГЛЯДУ -->
@@ -96,15 +97,20 @@
         <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
             <button onclick="app.closeAddModal()" class="absolute top-4 right-4 text-slate-500 hover:text-red-500 dark:text-slate-400 text-2xl font-bold">✕</button>
             
-            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+            <h2 class="text-2xl font-bold mb-2 text-slate-800 dark:text-white flex items-center gap-2">
                 <span class="bg-green-100 text-green-600 p-2 rounded-lg">➕</span> Додати нову тварину
             </h2>
+            
+            <p class="text-slate-500 dark:text-slate-400 mb-6 bg-slate-100 dark:bg-slate-700 p-3 rounded-lg border-l-4 border-green-500">
+                🌱 <b>Всі поля необов'язкові!</b> Заповніть лише те, що знаєте або хочете. <br>
+                Якщо ви залишите поле порожнім, ми підставимо щось загадкове замість нього.
+            </p>
             
             <form id="add-animal-form" onsubmit="app.handleAnimalSubmit(event)" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Назва тварини</label>
-                        <input type="text" name="name" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Наприклад: Велоцираптор">
+                        <input type="text" name="name" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Наприклад: Велоцираптор">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Категорія</label>
@@ -121,39 +127,39 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Тип (підзаголовок)</label>
-                        <input type="text" name="type" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижий динозавр">
+                        <input type="text" name="type" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижий динозавр">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Період</label>
-                        <input type="text" name="period" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: 75 млн років тому">
+                        <input type="text" name="period" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: 75 млн років тому">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Вага (кг)</label>
-                        <input type="number" name="weight" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="1000">
+                        <input type="number" name="weight" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="1000">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Дієта</label>
-                        <input type="text" name="diet" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижак 🥩">
+                        <input type="text" name="diet" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижак 🥩">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Опис</label>
-                    <textarea name="desc" rows="3" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Детальний опис тварини..."></textarea>
+                    <textarea name="desc" rows="3" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Детальний опис тварини..."></textarea>
                 </div>
 
                 <div>
                     <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Цікавий факт</label>
-                    <textarea name="funFact" rows="2" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Чи знали ви, що..."></textarea>
+                    <textarea name="funFact" rows="2" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Чи знали ви, що..."></textarea>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Іконка (Емодзі)</label>
-                        <input type="text" name="icon" required class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="🦖">
+                        <input type="text" name="icon" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="🦖">
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Зображення</label>
@@ -475,15 +481,15 @@
                 // 1. Gather data
                 const newAnimal = {
                     id: Date.now(),
-                    name: form.name.value,
-                    category: form.category.value,
-                    type: form.type.value,
-                    period: form.period.value,
-                    weight: Number(form.weight.value),
-                    diet: form.diet.value,
-                    desc: form.desc.value,
-                    funFact: form.funFact.value,
-                    icon: form.icon.value,
+                    name: form.name.value || "Невідома Тварина",
+                    category: form.category.value || "dino",
+                    type: form.type.value || "Загадкова істота",
+                    period: form.period.value || "Невідома епоха",
+                    weight: Number(form.weight.value) || 0,
+                    diet: form.diet.value || "Всеїдний",
+                    desc: form.desc.value || "Про цю тварину поки що мало відомо, але вона точно була дивовижною!",
+                    funFact: form.funFact.value || "Вчені все ще досліджують цю істоту.",
+                    icon: form.icon.value || "❓",
                     image: 'placeholder.jpg',
                     coords: [0, 0]
                 };
@@ -504,7 +510,7 @@
 
                 // 4. Try EmailJS
                 let sentStatus = "Не налаштовано";
-                if (EMAILJS_CONFIG.SERVICE_ID !== "extinct_animals") {
+                if (EMAILJS_CONFIG.SERVICE_ID !== "YOUR_SERVICE_ID") {
                     try {
                         const templateParams = {
                             to_email: "dad.rising@outlook.com",
