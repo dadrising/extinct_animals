@@ -20,6 +20,8 @@
     </script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         body { font-family: 'Open Sans', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Montserrat', sans-serif; }
@@ -49,7 +51,7 @@
             </div>
             
             <div class="flex items-center gap-3 md:gap-6">
-                <!-- Кнопка Додати Тварину (Нова) -->
+                <!-- Кнопка Додати Тварину -->
                 <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400">
                     <span class="text-xl">+</span> Додати тварину
                 </button>
@@ -79,7 +81,7 @@
 
     <!-- Футер -->
     <footer class="bg-slate-800 text-slate-400 py-6 text-center dark:bg-slate-950">
-        <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
+        <p>© 2023 PaleoWorld. Інтерактивна освітня платформа.</p>
     </footer>
 
     <!-- Модальне вікно ПЕРЕГЛЯДУ -->
@@ -89,7 +91,7 @@
         </div>
     </div>
 
-    <!-- Модальне вікно ДОДАВАННЯ (Нове) -->
+    <!-- Модальне вікно ДОДАВАННЯ -->
     <div id="add-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
         <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
             <button onclick="app.closeAddModal()" class="absolute top-4 right-4 text-slate-500 hover:text-red-500 dark:text-slate-400 text-2xl font-bold">✕</button>
@@ -160,8 +162,8 @@
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-[1.02] mt-4">
-                    Зберегти та Надіслати ✉️
+                <button type="submit" id="submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-[1.02] mt-4 flex items-center justify-center gap-2">
+                    <span>Зберегти та Надіслати</span> <span>✉️</span>
                 </button>
             </form>
         </div>
@@ -172,22 +174,38 @@
     <script src="quiz_data.js"></script>
 
     <script>
+        // ==============================================================
+        // КОНФІГУРАЦІЯ EMAILJS
+        // Зареєструйтесь на https://www.emailjs.com/
+        // Отримайте ключі і вставте їх сюди:
+        // ==============================================================
+        const EMAILJS_CONFIG = {
+            SERVICE_ID: "YOUR_SERVICE_ID",   // Напр: "service_abc123"
+            TEMPLATE_ID: "YOUR_TEMPLATE_ID", // Напр: "template_xyz789"
+            PUBLIC_KEY: "YOUR_PUBLIC_KEY"    // Напр: "user_12345abcdef"
+        };
+
         const app = {
             state: {
                 view: 'home',
                 searchTerm: '',
                 categoryFilter: 'all',
-                currentQuizQuestions: [], // Для 10 випадкових питань
+                currentQuizQuestions: [],
                 quizIndex: 0,
                 score: 0,
                 quizAnswered: false,
                 isDark: false,
-                customAnimals: [] // Для нових тварин
+                customAnimals: []
             },
 
             init() {
-                // Initialize Theme
+                // Init Theme
                 this.initTheme();
+
+                // Init EmailJS
+                if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+                    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+                }
 
                 // Check Data
                 if (typeof window.animals === 'undefined' || typeof window.quizData === 'undefined') {
@@ -199,9 +217,7 @@
                     return;
                 }
 
-                // Завантаження локальних тварин
                 this.loadCustomAnimals();
-
                 this.render();
             },
 
@@ -210,9 +226,6 @@
                 if (stored) {
                     try {
                         this.state.customAnimals = JSON.parse(stored);
-                        // Додаємо нових тварин до основного списку window.animals для відображення
-                        // (Робимо це обережно, щоб не дублювати при перезавантаженні сторінки)
-                        // Найпростіший спосіб - просто злити масиви при рендерінгу
                     } catch (e) {
                         console.error("Помилка читання LocalStorage", e);
                     }
@@ -220,7 +233,6 @@
             },
 
             getAllAnimals() {
-                // Об'єднуємо базу з JS файлу та локальні дані
                 return [...(window.animals || []), ...this.state.customAnimals];
             },
 
@@ -228,7 +240,6 @@
             initTheme() {
                 const userPref = localStorage.getItem('theme');
                 const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
                 if (userPref === 'dark' || (!userPref && systemPref)) {
                     this.state.isDark = true;
                     document.documentElement.classList.add('dark');
@@ -265,11 +276,7 @@
 
             navigate(view) {
                 this.state.view = view;
-                
-                if (view === 'quiz') {
-                    this.startNewQuiz();
-                }
-                
+                if (view === 'quiz') this.startNewQuiz();
                 if (view === 'encyclopedia') {
                     this.state.searchTerm = '';
                     this.state.categoryFilter = 'all';
@@ -281,8 +288,6 @@
                 this.state.quizIndex = 0;
                 this.state.score = 0;
                 this.state.quizAnswered = false;
-                
-                // Перемішуємо всі питання і беремо перші 10
                 if (window.quizData && window.quizData.length > 0) {
                     const shuffled = [...window.quizData].sort(() => 0.5 - Math.random());
                     this.state.currentQuizQuestions = shuffled.slice(0, 10);
@@ -303,8 +308,7 @@
             },
 
             renderHome(container) {
-                const allAnimals = this.getAllAnimals();
-                const count = allAnimals.length;
+                const count = this.getAllAnimals().length;
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
                         <div class="text-8xl mb-6 animate-bounce">🦖</div>
@@ -330,16 +334,11 @@
             },
 
             renderEncyclopedia(container) {
-                const allAnimals = this.getAllAnimals();
-                const filtered = allAnimals.filter(a => {
+                const filtered = this.getAllAnimals().filter(a => {
                     const matchSearch = a.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
                     const matchCat = this.state.categoryFilter === 'all' || a.category === this.state.categoryFilter;
                     return matchSearch && matchCat;
                 });
-
-                // Сортуємо: нові (з великими ID) перші, або просто за порядком
-                // Для зручності покажемо доданих користувачем першими (якщо вони є)
-                // Але стандартно просто рендеримо масив.
 
                 container.innerHTML = `
                     <div class="fade-in">
@@ -373,10 +372,8 @@
             },
 
             createAnimalCard(animal) {
-                // Перевірка, чи це зображення Base64 (від користувача) чи шлях до файлу
                 const isBase64 = animal.image && animal.image.startsWith('data:image');
                 const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
-
                 return `
                     <div class="bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-100 dark:border-slate-700 overflow-hidden card-hover cursor-pointer flex flex-col h-full" onclick="app.openModal(${animal.id})">
                         <div class="h-48 w-full bg-slate-200 dark:bg-slate-700 relative flex items-center justify-center overflow-hidden">
@@ -459,7 +456,7 @@
                 setTimeout(() => { modal.classList.add('hidden'); }, 300);
             },
 
-            // --- ДОДАВАННЯ ТВАРИНИ (MODAL) ---
+            // --- MODAL & FORM LOGIC ---
             openAddAnimalModal() {
                 document.getElementById('add-modal-backdrop').classList.remove('hidden');
             },
@@ -471,10 +468,13 @@
             async handleAnimalSubmit(e) {
                 e.preventDefault();
                 const form = e.target;
-                
-                // Зчитування даних форми
+                const btn = document.getElementById('submit-btn');
+                btn.disabled = true;
+                btn.innerHTML = 'Обробка...';
+
+                // 1. Gather data
                 const newAnimal = {
-                    id: Date.now(), // Унікальний ID
+                    id: Date.now(),
                     name: form.name.value,
                     category: form.category.value,
                     type: form.type.value,
@@ -484,49 +484,54 @@
                     desc: form.desc.value,
                     funFact: form.funFact.value,
                     icon: form.icon.value,
-                    image: 'placeholder.jpg', // Тимчасове значення
-                    coords: [0, 0] // Дефолтні координати
+                    image: 'placeholder.jpg',
+                    coords: [0, 0]
                 };
 
-                // Обробка зображення (File to Base64)
+                // 2. Handle Image
                 const fileInput = document.getElementById('animal-image-input');
                 if (fileInput.files && fileInput.files[0]) {
                     try {
                         newAnimal.image = await this.toBase64(fileInput.files[0]);
                     } catch (err) {
-                        console.error("Помилка фото:", err);
-                        alert("Не вдалося завантажити фото. Буде використано заглушку.");
+                        console.error("Фото помилка", err);
                     }
                 }
 
-                // Збереження в LocalStorage
+                // 3. Save Locally
                 this.state.customAnimals.push(newAnimal);
                 localStorage.setItem('paleo_custom_animals', JSON.stringify(this.state.customAnimals));
 
-                // Відправка Email (Mailto)
-                const mailSubject = encodeURIComponent(`Нова тварина: ${newAnimal.name}`);
-                const mailBody = encodeURIComponent(
-`Додано нову тварину на сайт!
+                // 4. Try EmailJS
+                let sentStatus = "Не налаштовано";
+                if (EMAILJS_CONFIG.SERVICE_ID !== "extinct_animals") {
+                    try {
+                        const templateParams = {
+                            to_email: "dad.rising@outlook.com",
+                            animal_name: newAnimal.name,
+                            animal_type: newAnimal.type,
+                            animal_desc: newAnimal.desc,
+                            animal_weight: newAnimal.weight,
+                            animal_diet: newAnimal.diet,
+                            message: `Додано нову тварину! Ім'я: ${newAnimal.name}`
+                        };
+                        await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
+                        sentStatus = "Відправлено";
+                    } catch (error) {
+                        console.error("EmailJS Error:", error);
+                        sentStatus = "Помилка відправки";
+                    }
+                } else {
+                    console.log("EmailJS не налаштовано. Лист не відправлено.");
+                }
 
-Ім'я: ${newAnimal.name}
-Тип: ${newAnimal.type}
-Період: ${newAnimal.period}
-Вага: ${newAnimal.weight} кг
-Дієта: ${newAnimal.diet}
-Опис: ${newAnimal.desc}
-Факт: ${newAnimal.funFact}
-
-(Фото збережено локально у браузері)`
-                );
+                alert(`Тварину збережено! Статус Email: ${sentStatus}. (Якщо не налаштовано, це нормально).`);
                 
-                // Відкриваємо поштовий клієнт
-                window.location.href = `mailto:dad.rising@outlook.com?subject=${mailSubject}&body=${mailBody}`;
-
-                // Оновлення інтерфейсу
-                alert('Тварину збережено! Ваша поштова програма повинна відкритися для відправки звіту.');
                 form.reset();
+                btn.disabled = false;
+                btn.innerHTML = 'Зберегти та Надіслати ✉️';
                 this.closeAddModal();
-                this.navigate('encyclopedia'); // Перехід до списку, щоб побачити нову тварину
+                this.navigate('encyclopedia');
             },
 
             toBase64(file) {
@@ -538,16 +543,13 @@
                 });
             },
 
-            // --- QUIZ LOGIC (Random 10) ---
+            // --- QUIZ ---
             renderQuiz(container) {
                 const questions = this.state.currentQuizQuestions;
-                
-                // Якщо питань немає (помилка) або пройшли всі
                 if (questions.length === 0) {
-                     container.innerHTML = `<div class="text-center mt-10">Завантаження питань...</div>`;
+                     container.innerHTML = `<div class="text-center mt-10 dark:text-white">Завантаження питань...</div>`;
                      return;
                 }
-
                 if (this.state.quizIndex >= questions.length) { 
                     this.renderQuizResult(container); 
                     return; 
@@ -583,11 +585,9 @@
             handleAnswer(idx) {
                 if (this.state.quizAnswered) return;
                 this.state.quizAnswered = true;
-                
                 const questions = this.state.currentQuizQuestions;
                 const q = questions[this.state.quizIndex];
                 const isCorrect = idx === q.correct;
-                
                 if (isCorrect) this.state.score++;
                 
                 const btns = document.querySelectorAll('#options-container button');
