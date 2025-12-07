@@ -15,9 +15,7 @@
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     colors: {
-                        amber: {
-                            450: '#F59E0B', // Custom Amber for particles
-                        }
+                        amber: { 450: '#F59E0B' }
                     }
                 }
             }
@@ -30,35 +28,17 @@
     <style>
         body { font-family: 'Open Sans', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Montserrat', sans-serif; }
-        
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Canvas Background */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Behind everything */
-            pointer-events: none; /* Let clicks pass through */
-        }
-        
-        /* Smooth Background Transition */
-        body {
-            transition: background-color 0.5s ease, color 0.5s ease;
-        }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        body { transition: background-color 0.5s ease, color 0.5s ease; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col dark:bg-slate-900 dark:text-slate-100 relative overflow-x-hidden transition-colors duration-300">
@@ -93,6 +73,7 @@
                     <option value="matrix">💻 Матриця</option>
                     <option value="asteroids">☄️ Астероїди</option>
                     <option value="dino_world">🦕 Дино Світ</option>
+                    <option value="dna_flow">🧬 ДНК</option>
                     <option value="geometry">🔷 Геометрія</option>
                 </select>
 
@@ -119,7 +100,7 @@
     <!-- Футер -->
     <footer class="bg-slate-800/80 backdrop-blur-sm text-slate-400 py-6 text-center dark:bg-slate-950/80 text-sm border-t border-slate-700 mt-auto">
         <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
-        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.4</p>
+        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.5</p>
     </footer>
 
     <!-- Модальне вікно ПЕРЕГЛЯДУ -->
@@ -238,7 +219,6 @@
                 quizAnswered: false,
                 isDark: false,
                 customAnimals: [],
-                // Емодзі для "стрибаючого" героя (20+ варіантів)
                 heroEmojis: [
                     '🦖', '🦕', '🦎', '🐍', '🐢', '🐊', '🦈', '🐋', '🐬', '🐟',
                     '🐠', '🐡', '🐙', '🐚', '🦀', '🦞', '🦂', '🦅', '🦆', '🦇',
@@ -272,6 +252,16 @@
 
                 this.loadCustomAnimals();
                 this.render();
+                
+                // Start Interval for Hero Emoji Change
+                // Змінюємо емодзі рівно посередині анімації bounce (1с), тобто кожні 1000мс зі зсувом 500мс
+                // Це виглядає ніби він змінюється при ударі об землю
+                setTimeout(() => {
+                    setInterval(() => {
+                        const hero = document.getElementById('hero-dino');
+                        if (hero) this.changeHeroEmoji(hero);
+                    }, 1000);
+                }, 500);
             },
 
             changeAnimation(effectName) {
@@ -377,10 +367,9 @@
                 const count = this.getAllAnimals().length;
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
-                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick змінює фон, onanimationiteration змінює героя -->
+                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick змінює фон -->
                         <div id="hero-dino" class="text-8xl mb-6 animate-bounce drop-shadow-xl cursor-pointer select-none"
-                             onclick="if(typeof bgAnimation !== 'undefined') bgAnimation.nextEffect()"
-                             onanimationiteration="app.changeHeroEmoji(this)">🦖</div>
+                             onclick="if(typeof bgAnimation !== 'undefined') bgAnimation.nextEffect()">🦖</div>
                              
                         <h1 class="text-4xl md:text-6xl font-extrabold text-slate-800 dark:text-white mb-4 drop-shadow-sm">
                             Ласкаво просимо в <br/><span class="text-amber-500">Світ Вимерлих Тварин</span>
