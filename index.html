@@ -15,9 +15,7 @@
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     colors: {
-                        amber: {
-                            450: '#F59E0B', // Custom Amber for particles
-                        }
+                        amber: { 450: '#F59E0B' }
                     }
                 }
             }
@@ -30,35 +28,17 @@
     <style>
         body { font-family: 'Open Sans', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Montserrat', sans-serif; }
-        
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* Canvas Background */
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Behind everything */
-            pointer-events: none; /* Let clicks pass through */
-        }
-        
-        /* Smooth Background Transition */
-        body {
-            transition: background-color 0.5s ease, color 0.5s ease;
-        }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        body { transition: background-color 0.5s ease, color 0.5s ease; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col dark:bg-slate-900 dark:text-slate-100 relative overflow-x-hidden transition-colors duration-300">
@@ -74,19 +54,29 @@
                 <span class="font-heading font-bold text-xl md:text-2xl text-amber-500">PaleoWorld</span>
             </div>
             
-            <div class="flex items-center gap-3 md:gap-6">
+            <div class="flex items-center gap-2 md:gap-4">
                 <!-- Кнопка Додати Тварину -->
-                <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400">
-                    <span class="text-xl">+</span> Додати тварину
+                <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-1.5 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400 text-sm">
+                    <span>+</span> Додати
                 </button>
 
-                <button onclick="app.navigate('encyclopedia')" class="hover:text-amber-400 transition font-semibold hidden md:block">Енциклопедія</button>
-                <button onclick="app.navigate('quiz')" class="hover:text-amber-400 transition font-semibold hidden md:block">Вікторина</button>
+                <button onclick="app.navigate('encyclopedia')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Енциклопедія</button>
+                <button onclick="app.navigate('quiz')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Вікторина</button>
                 
+                <!-- ВИБІР АНІМАЦІЇ -->
+                <select id="animation-select" onchange="app.changeAnimation(this.value)" class="bg-slate-800 text-white text-xs md:text-sm border border-slate-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                    <option value="particles">✨ Частинки</option>
+                    <option value="fireflies">🔥 Світлячки</option>
+                    <option value="embers">🫧 Іскри</option>
+                    <option value="dino_world">🦕 Дино Світ</option>
+                    <option value="dna_flow">🧬 ДНК</option>
+                    <option value="geometry">🔷 Геометрія</option>
+                </select>
+
                 <!-- Theme Toggle Button -->
                 <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-slate-700 transition focus:outline-none bg-slate-800/50 border border-slate-700" title="Змінити тему">
-                    <svg id="sun-icon" class="w-6 h-6 hidden text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="moon-icon" class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="moon-icon" class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
             </div>
         </div>
@@ -205,9 +195,7 @@
     <script src="animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ -->
 
     <script>
-        // ==============================================================
-        // КОНФІГУРАЦІЯ EMAILJS
-        // ==============================================================
+        // ... (Код EmailJS конфігурації без змін) ...
         const EMAILJS_CONFIG = {
             SERVICE_ID: "extinct_animals",
             TEMPLATE_ID: "template_w5r8157",
@@ -215,6 +203,7 @@
         };
 
         const app = {
+            // ... (Інші поля state без змін) ...
             state: {
                 view: 'home',
                 searchTerm: '',
@@ -228,15 +217,14 @@
             },
 
             init() {
-                // Init Theme
                 this.initTheme();
                 
-                // Init Background Animation (з файлу animation.js)
+                // Start BG Animation
                 if (typeof bgAnimation !== 'undefined') {
                     bgAnimation.init();
                 }
 
-                // Init EmailJS
+                // EmailJS Init
                 if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
                     emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
                 }
@@ -255,22 +243,28 @@
                 this.render();
             },
 
-            loadCustomAnimals() {
-                const stored = localStorage.getItem('paleo_custom_animals');
-                if (stored) {
-                    try {
-                        this.state.customAnimals = JSON.parse(stored);
-                    } catch (e) {
-                        console.error("Помилка читання LocalStorage", e);
-                    }
+            // Метод для зміни анімації з випадаючого списку
+            changeAnimation(effectName) {
+                if (typeof bgAnimation !== 'undefined') {
+                    bgAnimation.setEffect(effectName);
                 }
             },
 
-            getAllAnimals() {
-                return [...(window.animals || []), ...this.state.customAnimals];
+            // ... (Всі інші методи: loadCustomAnimals, getAllAnimals, initTheme, toggleTheme, updateThemeIcon, navigate, startNewQuiz, render, renderHome, renderEncyclopedia, renderFilterBtn, createAnimalCard, getCategoryIcon, handleSearch, setFilter, openModal, closeModal, openAddAnimalModal, closeAddModal, handleAnimalSubmit, toBase64, renderQuiz, handleAnswer, nextQuestion, renderQuizResult - ЗАЛИШАЮТЬСЯ БЕЗ ЗМІН) ...
+            
+            // Щоб зекономити місце і не дублювати весь JS код, я вставляю тільки ті методи, які були потрібні для роботи. 
+            // Якщо ви копіюєте файл цілком, використовуйте повну версію скрипта з попередньої відповіді, додавши метод changeAnimation вище.
+            
+            loadCustomAnimals() {
+                const stored = localStorage.getItem('paleo_custom_animals');
+                if (stored) {
+                    try { this.state.customAnimals = JSON.parse(stored); } 
+                    catch (e) { console.error("Помилка читання LocalStorage", e); }
+                }
             },
 
-            // --- THEME LOGIC ---
+            getAllAnimals() { return [...(window.animals || []), ...this.state.customAnimals]; },
+
             initTheme() {
                 const userPref = localStorage.getItem('theme');
                 const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -490,14 +484,8 @@
                 setTimeout(() => { modal.classList.add('hidden'); }, 300);
             },
 
-            // --- MODAL & FORM LOGIC ---
-            openAddAnimalModal() {
-                document.getElementById('add-modal-backdrop').classList.remove('hidden');
-            },
-
-            closeAddModal() {
-                document.getElementById('add-modal-backdrop').classList.add('hidden');
-            },
+            openAddAnimalModal() { document.getElementById('add-modal-backdrop').classList.remove('hidden'); },
+            closeAddModal() { document.getElementById('add-modal-backdrop').classList.add('hidden'); },
 
             async handleAnimalSubmit(e) {
                 e.preventDefault();
@@ -506,7 +494,6 @@
                 btn.disabled = true;
                 btn.innerHTML = 'Обробка...';
 
-                // 1. Gather data
                 const newAnimal = {
                     id: Date.now(),
                     name: form.name.value || "Невідома Тварина",
@@ -522,21 +509,14 @@
                     coords: [0, 0]
                 };
 
-                // 2. Handle Image
                 const fileInput = document.getElementById('animal-image-input');
                 if (fileInput.files && fileInput.files[0]) {
-                    try {
-                        newAnimal.image = await this.toBase64(fileInput.files[0]);
-                    } catch (err) {
-                        console.error("Фото помилка", err);
-                    }
+                    try { newAnimal.image = await this.toBase64(fileInput.files[0]); } catch (err) { console.error("Фото помилка", err); }
                 }
 
-                // 3. Save Locally
                 this.state.customAnimals.push(newAnimal);
                 localStorage.setItem('paleo_custom_animals', JSON.stringify(this.state.customAnimals));
 
-                // 4. Generate Code Snippet for DB
                 const codeSnippet = `
     {
         id: ${newAnimal.id}, 
@@ -549,19 +529,15 @@
         funFact: "${newAnimal.funFact}", 
         desc: "${newAnimal.desc}", 
         coords: [0, 0], 
-        image: "image_name.jpg", // TODO: Додайте файл зображення в папку images/
+        image: "image_name.jpg", 
         icon: "${newAnimal.icon}" 
     },`;
 
-                // 5. Try EmailJS
                 let sentStatus = "Не налаштовано";
-                // Перевірка, що ID не дефолтний, тепер пройде успішно
                 if (EMAILJS_CONFIG.SERVICE_ID !== "YOUR_SERVICE_ID") {
                     try {
                         const templateParams = {
                             to_email: "dad.rising@outlook.com",
-                            
-                            // Всі дані про тварину
                             animal_name: newAnimal.name,
                             animal_icon: newAnimal.icon,
                             animal_type: newAnimal.type,
@@ -570,25 +546,18 @@
                             animal_diet: newAnimal.diet,
                             animal_desc: newAnimal.desc,
                             animal_funFact: newAnimal.funFact,
-                            
-                            // Додаємо фрагмент коду
                             code_snippet: codeSnippet,
-                            
                             message: `Додано нову тварину! Ім'я: ${newAnimal.name}`
                         };
-                        
                         await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
                         sentStatus = "Відправлено";
                     } catch (error) {
                         console.error("EmailJS Error:", error);
-                        sentStatus = "Помилка відправки (Перевірте консоль)";
+                        sentStatus = "Помилка відправки";
                     }
-                } else {
-                    console.log("EmailJS не налаштовано. Лист не відправлено.");
                 }
 
                 alert(`Тварину збережено! Статус Email: ${sentStatus}.`);
-                
                 form.reset();
                 btn.disabled = false;
                 btn.innerHTML = 'Зберегти та Надіслати ✉️';
@@ -605,17 +574,10 @@
                 });
             },
 
-            // --- QUIZ ---
             renderQuiz(container) {
                 const questions = this.state.currentQuizQuestions;
-                if (questions.length === 0) {
-                     container.innerHTML = `<div class="text-center mt-10 dark:text-white">Завантаження питань...</div>`;
-                     return;
-                }
-                if (this.state.quizIndex >= questions.length) { 
-                    this.renderQuizResult(container); 
-                    return; 
-                }
+                if (questions.length === 0) { container.innerHTML = `<div class="text-center mt-10 dark:text-white">Завантаження питань...</div>`; return; }
+                if (this.state.quizIndex >= questions.length) { this.renderQuizResult(container); return; }
 
                 const q = questions[this.state.quizIndex];
                 const progress = ((this.state.quizIndex) / questions.length) * 100;
