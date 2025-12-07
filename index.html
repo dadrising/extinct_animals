@@ -59,7 +59,6 @@
     </div>
 
     <!-- ПОДКЛЮЧЕНИЕ ВНЕШНИХ ФАЙЛОВ ДАННЫХ -->
-    <!-- Важно: эти скрипты должны быть загружены ДО основного скрипта приложения -->
     <script src="animals_data.js"></script>
     <script src="quiz_data.js"></script>
 
@@ -79,8 +78,8 @@
             },
 
             init() {
-                // Проверяем, загрузились ли данные из внешних файлов
-                if (typeof animals === 'undefined' || typeof quizData === 'undefined') {
+                // Check if data loaded (using window.animals for animals_data.js)
+                if ((typeof animals === 'undefined' && typeof window.animals === 'undefined') || typeof quizData === 'undefined') {
                     const main = document.getElementById('app');
                     main.innerHTML = `
                         <div class="text-center p-10 text-red-600 bg-red-100 rounded-xl">
@@ -88,9 +87,11 @@
                             <p>Переконайтеся, що файли <b>animals_data.js</b> та <b>quiz_data.js</b> знаходяться в тій самій папці, що і index.html.</p>
                         </div>
                     `;
-                    console.error('Помилка: Змінні "animals" або "quizData" не знайдено.');
+                    console.error('Помилка: Дані не знайдено.');
                     return;
                 }
+                // Normalize animals access (support both window.animals and const animals)
+                this.animalsData = window.animals || animals;
                 this.render();
             },
 
@@ -128,11 +129,18 @@
 
             // --- ГОЛОВНА СТОРІНКА ---
             renderHome(container) {
+                const count = this.animalsData ? this.animalsData.length : 0;
+                
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
                         <div class="text-8xl mb-6 animate-bounce">🦖</div>
                         <h1 class="text-4xl md:text-6xl font-extrabold text-slate-800 mb-4">Ласкаво просимо в <br/><span class="text-amber-600">Світ Вимерлих Тварин</span></h1>
-                        <p class="text-xl text-slate-600 mb-10 max-w-2xl">Досліджуйте стародавніх гігантів, дізнавайтеся неймовірні факти та перевіряйте свої знання у вікторині.</p>
+                        <p class="text-xl text-slate-600 mb-2 max-w-2xl">Досліджуйте стародавніх гігантів, дізнавайтеся неймовірні факти та перевіряйте свої знання у вікторині.</p>
+                        
+                        <!-- Лічильник тварин -->
+                        <div class="mb-10 inline-block bg-slate-100 px-6 py-2 rounded-full border border-slate-200">
+                             <span class="text-slate-500 font-semibold">В базі даних: <span class="text-amber-600 font-bold text-lg">${count}</span> видів</span>
+                        </div>
                         
                         <div class="flex flex-col md:flex-row gap-6 w-full max-w-md">
                             <button onclick="app.navigate('encyclopedia')" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-4 rounded-xl text-xl font-bold shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2">
@@ -148,8 +156,7 @@
 
             // --- ЕНЦИКЛОПЕДІЯ ---
             renderEncyclopedia(container) {
-                // Фільтрація (використовуємо глобальну змінну animals з файлу animals_data.js)
-                const filteredAnimals = animals.filter(a => {
+                const filteredAnimals = this.animalsData.filter(a => {
                     const matchesSearch = a.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
                     const matchesCategory = this.state.categoryFilter === 'all' || 
                         (this.state.categoryFilter === 'dino' && a.category === 'dino') ||
@@ -160,7 +167,6 @@
                     return matchesSearch && matchesCategory;
                 });
 
-                // HTML
                 let html = `
                     <div class="fade-in">
                         <div class="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl shadow-sm">
@@ -200,11 +206,10 @@
             },
 
             createAnimalCard(animal) {
-                // Fallback для зображення: якщо картинка не завантажиться, покажемо бекграунд з емодзі
+                // Використовуємо animal.desc замість shortDesc
                 return `
                     <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover cursor-pointer flex flex-col h-full" onclick="app.openModal(${animal.id})">
                         <div class="h-48 w-full bg-slate-200 relative flex items-center justify-center overflow-hidden">
-                             <!-- Спробуємо показати картинку, якщо помилка - покажемо емодзі -->
                              <img src="images/${animal.image}" 
                                   alt="${animal.name}" 
                                   class="w-full h-full object-cover absolute inset-0 z-10"
@@ -221,7 +226,7 @@
                                 <span class="text-2xl" title="Категорія">${this.getCategoryIcon(animal.category)}</span>
                             </div>
                             <p class="text-sm text-slate-500 mb-2">🕒 ${animal.period}</p>
-                            <p class="text-slate-600 text-sm line-clamp-3 mb-4 flex-grow">${animal.shortDesc}</p>
+                            <p class="text-slate-600 text-sm line-clamp-3 mb-4 flex-grow">${animal.desc}</p>
                             <div class="mt-auto pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-500">
                                 <span>⚖️ ${animal.weight > 1000 ? (animal.weight/1000).toFixed(1) + ' т' : animal.weight + ' кг'}</span>
                                 <span>${animal.diet}</span>
@@ -248,13 +253,13 @@
 
             // --- МОДАЛЬНЕ ВІКНО ---
             openModal(id) {
-                // Шукаємо в глобальному масиві animals
-                const animal = animals.find(a => a.id === id);
+                const animal = this.animalsData.find(a => a.id === id);
                 if (!animal) return;
 
                 const modal = document.getElementById('modal-backdrop');
                 const content = document.getElementById('modal-content');
                 
+                // Використовуємо animal.desc замість fullDesc, та animal.funFact (string)
                 content.innerHTML = `
                     <div class="relative">
                         <button onclick="app.closeModal()" class="absolute top-4 right-4 bg-white rounded-full p-2 shadow-lg z-20 hover:bg-slate-100">✕</button>
@@ -281,23 +286,22 @@
                             </div>
 
                             <div class="prose max-w-none text-slate-700 mb-8">
-                                <p class="text-lg leading-relaxed">${animal.fullDesc}</p>
+                                <p class="text-lg leading-relaxed">${animal.desc}</p>
                             </div>
 
                             <div class="bg-indigo-50 p-6 rounded-xl border border-indigo-100">
                                 <h4 class="font-bold text-indigo-900 mb-3 flex items-center gap-2">
-                                    <span>💡</span> Цікаві факти
+                                    <span>💡</span> Цікавий факт
                                 </h4>
-                                <ul class="space-y-2">
-                                    ${animal.funFacts.map(fact => `<li class="flex gap-2 items-start"><span class="text-indigo-500 mt-1">•</span><span>${fact}</span></li>`).join('')}
-                                </ul>
+                                <p class="text-slate-700 italic">
+                                    ${animal.funFact}
+                                </p>
                             </div>
                         </div>
                     </div>
                 `;
 
                 modal.classList.remove('hidden');
-                // Анимация открытия
                 setTimeout(() => {
                     content.classList.remove('scale-95', 'opacity-0');
                     content.classList.add('scale-100', 'opacity-100');
@@ -305,7 +309,7 @@
             },
 
             closeModal(e) {
-                if (e && !e.target.closest('#modal-backdrop') && !e.target.classList.contains('absolute')) return; // Клик внутри контента не закрывает
+                if (e && !e.target.closest('#modal-backdrop') && !e.target.classList.contains('absolute')) return; 
                 if (e && e.target.closest('#modal-content')) return;
 
                 const modal = document.getElementById('modal-backdrop');
@@ -321,7 +325,6 @@
 
             // --- ВІКТОРИНА ---
             renderQuiz(container) {
-                // Використовуємо глобальну змінну quizData з файлу quiz_data.js
                 if (this.state.quizIndex >= quizData.length) {
                     this.renderQuizResult(container);
                     return;
@@ -332,7 +335,6 @@
 
                 let html = `
                     <div class="max-w-2xl mx-auto fade-in pt-4">
-                        <!-- Прогрес -->
                         <div class="w-full bg-slate-200 rounded-full h-2.5 mb-6">
                             <div class="bg-amber-500 h-2.5 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
                         </div>
@@ -353,9 +355,7 @@
                                 `).join('')}
                             </div>
 
-                            <div id="explanation-box" class="hidden mt-6 p-4 bg-slate-100 rounded-lg border-l-4 border-slate-400 animate-pulse">
-                                <!-- Пояснення з'явиться тут -->
-                            </div>
+                            <div id="explanation-box" class="hidden mt-6 p-4 bg-slate-100 rounded-lg border-l-4 border-slate-400 animate-pulse"></div>
 
                             <button id="next-btn" onclick="app.nextQuestion()" class="hidden w-full mt-8 bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition">
                                 Наступне питання ➜
@@ -375,7 +375,6 @@
                 
                 if (isCorrect) this.state.score++;
 
-                // Оновлення стилів кнопок
                 const buttons = document.querySelectorAll('#options-container button');
                 buttons.forEach((btn, idx) => {
                     btn.classList.remove('hover:border-amber-400', 'hover:bg-amber-50');
@@ -390,7 +389,6 @@
                     }
                 });
 
-                // Показати пояснення
                 const expBox = document.getElementById('explanation-box');
                 expBox.classList.remove('hidden', 'animate-pulse');
                 expBox.classList.add('fade-in');
@@ -404,7 +402,6 @@
                     <p class="text-slate-700">${question.explanations[selectedIndex]}</p>
                 `;
 
-                // Показати кнопку далі
                 document.getElementById('next-btn').classList.remove('hidden');
             },
 
@@ -443,7 +440,6 @@
             }
         };
 
-        // Запуск приложения после загрузки страницы
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
         });
