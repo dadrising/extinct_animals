@@ -100,7 +100,7 @@
     <!-- Футер -->
     <footer class="bg-slate-800/80 backdrop-blur-sm text-slate-400 py-6 text-center dark:bg-slate-950/80 text-sm border-t border-slate-700 mt-auto">
         <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
-        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.5</p>
+        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.6</p>
     </footer>
 
     <!-- Модальне вікно ПЕРЕГЛЯДУ -->
@@ -197,6 +197,7 @@
     <script src="animals_data.js"></script>
     <script src="quiz_data.js"></script>
     <script src="animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ -->
+    <script src="hero_animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ ГЕРОЯ -->
 
     <script>
         // ==============================================================
@@ -218,12 +219,8 @@
                 score: 0,
                 quizAnswered: false,
                 isDark: false,
-                customAnimals: [],
-                heroEmojis: [
-                    '🦖', '🦕', '🦎', '🐍', '🐢', '🐊', '🦈', '🐋', '🐬', '🐟',
-                    '🐠', '🐡', '🐙', '🐚', '🦀', '🦞', '🦂', '🦅', '🦆', '🦇',
-                    '🦣', '🦥', '🐅', '🦏', '🦍', '🦫', '🦓', '🐕', '🐂', '🐎'
-                ]
+                customAnimals: []
+                // heroEmojis більше не потрібні тут, вони в hero_animation.js
             },
 
             init() {
@@ -233,6 +230,11 @@
                 // Init Background Animation
                 if (typeof bgAnimation !== 'undefined') {
                     bgAnimation.init();
+                }
+
+                // Init Hero Animation
+                if (typeof HeroDino !== 'undefined') {
+                    HeroDino.init();
                 }
 
                 // Init EmailJS
@@ -252,29 +254,12 @@
 
                 this.loadCustomAnimals();
                 this.render();
-                
-                // Start Interval for Hero Emoji Change
-                // Змінюємо емодзі рівно посередині анімації bounce (1с), тобто кожні 1000мс зі зсувом 500мс
-                // Це виглядає ніби він змінюється при ударі об землю
-                setTimeout(() => {
-                    setInterval(() => {
-                        const hero = document.getElementById('hero-dino');
-                        if (hero) this.changeHeroEmoji(hero);
-                    }, 1000);
-                }, 500);
             },
 
             changeAnimation(effectName) {
                 if (typeof bgAnimation !== 'undefined') {
                     bgAnimation.setEffect(effectName);
                 }
-            },
-
-            // Метод для зміни емодзі "героя"
-            changeHeroEmoji(element) {
-                const emojis = this.state.heroEmojis;
-                const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-                element.innerText = randomEmoji;
             },
 
             loadCustomAnimals() {
@@ -367,9 +352,8 @@
                 const count = this.getAllAnimals().length;
                 container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
-                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick змінює фон -->
-                        <div id="hero-dino" class="text-8xl mb-6 animate-bounce drop-shadow-xl cursor-pointer select-none"
-                             onclick="if(typeof bgAnimation !== 'undefined') bgAnimation.nextEffect()">🦖</div>
+                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick та зміна емодзі тепер в hero_animation.js -->
+                        <div id="hero-dino" class="text-8xl mb-6 animate-bounce drop-shadow-xl cursor-pointer select-none">🦖</div>
                              
                         <h1 class="text-4xl md:text-6xl font-extrabold text-slate-800 dark:text-white mb-4 drop-shadow-sm">
                             Ласкаво просимо в <br/><span class="text-amber-500">Світ Вимерлих Тварин</span>
@@ -390,6 +374,12 @@
                         </div>
                     </div>
                 `;
+                
+                // Перезапуск Hero Animation при рендері Home
+                if (typeof HeroDino !== 'undefined') {
+                    // Трохи зачекати, поки DOM оновиться
+                    setTimeout(() => HeroDino.init(), 50);
+                }
             },
 
             renderEncyclopedia(container) {
