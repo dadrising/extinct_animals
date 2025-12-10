@@ -28,333 +28,473 @@
     <style>
         body { font-family: 'Open Sans', sans-serif; }
         h1, h2, h3, h4, .font-heading { font-family: 'Montserrat', sans-serif; }
+
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         .dark ::-webkit-scrollbar-track { background: #1e293b; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-        body { transition: background-color 0.5s ease, color 0.5s ease; }
+
+        /* Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind everything */
+            pointer-events: none; /* Let clicks pass through */
+        }
+
+        /* Smooth Background Transition */
+        body {
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #F59E0B; cursor: pointer; margin-top: -6px; transition: transform 0.1s;
+        }
+        input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #cbd5e1; border-radius: 2px;
+        }
+        .dark input[type=range]::-webkit-slider-runnable-track { background: #475569; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col dark:bg-slate-900 dark:text-slate-100 relative overflow-x-hidden transition-colors duration-300">
 
-    <!-- BACKGROUND ANIMATION CANVAS -->
-    <canvas id="bg-canvas"></canvas>
+<!-- BACKGROUND ANIMATION CANVAS -->
+<canvas id="bg-canvas"></canvas>
 
-    <!-- Навігація -->
-    <nav class="bg-slate-900/90 backdrop-blur-md text-white shadow-lg sticky top-0 z-50 dark:bg-slate-950/90 border-b border-slate-800">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2 cursor-pointer group" onclick="app.navigate('home')">
-                <span class="text-3xl group-hover:scale-110 transition-transform">🦖</span>
-                <span class="font-heading font-bold text-xl md:text-2xl text-amber-500">PaleoWorld</span>
-            </div>
-            
-            <div class="flex items-center gap-2 md:gap-4">
-                <!-- Кнопка Додати Тварину -->
-                <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-1.5 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400 text-sm">
-                    <span>+</span> Додати
-                </button>
-
-                <button onclick="app.navigate('encyclopedia')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Енциклопедія</button>
-                <button onclick="app.navigate('quiz')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Вікторина</button>
-                
-                <!-- ВИБІР АНІМАЦІЇ -->
-                <select id="animation-select" onchange="app.changeAnimation(this.value)" class="bg-slate-800 text-white text-xs md:text-sm border border-slate-600 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
-                    <option value="particles">✨ Частинки</option>
-                    <option value="embers">🫧 Іскри</option>
-                    <option value="snow">❄️ Сніг</option>
-                    <option value="spiral">🌀 Спіраль</option>
-                    <option value="warp">🚀 Гіперпростір</option>
-                    <option value="matrix">💻 Матриця</option>
-                    <option value="asteroids">☄️ Астероїди</option>
-                    <option value="dino_world">🦕 Дино Світ</option>
-                    <option value="dna_flow">🧬 ДНК</option>
-                    <option value="geometry">🔷 Геометрія</option>
-                </select>
-
-                <!-- Theme Toggle Button -->
-                <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-slate-700 transition focus:outline-none bg-slate-800/50 border border-slate-700" title="Змінити тему">
-                    <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <svg id="moon-icon" class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                </button>
-            </div>
+<!-- Навігація -->
+<nav class="bg-slate-900/90 backdrop-blur-md text-white shadow-lg sticky top-0 z-50 dark:bg-slate-950/90 border-b border-slate-800">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-2 cursor-pointer group" onclick="app.navigate('home')">
+            <span class="text-3xl group-hover:scale-110 transition-transform">🦖</span>
+            <span class="font-heading font-bold text-xl md:text-2xl text-amber-500">PaleoWorld</span>
         </div>
-        <!-- Mobile Menu -->
-        <div class="md:hidden flex flex-wrap justify-around py-2 bg-slate-800 dark:bg-slate-900 border-t border-slate-700">
-            <button onclick="app.openAddAnimalModal()" class="w-full mb-2 mx-4 bg-green-600 text-white py-1 rounded-lg text-sm font-bold">➕ Додати тварину</button>
-            <button onclick="app.navigate('encyclopedia')" class="text-sm font-semibold hover:text-amber-400">📚 Енциклопедія</button>
-            <button onclick="app.navigate('quiz')" class="text-sm font-semibold hover:text-amber-400">🧠 Вікторина</button>
-        </div>
-    </nav>
 
-    <!-- Основний контент -->
-    <main id="app" class="flex-grow container mx-auto px-4 py-6 relative z-10">
-        <!-- JS renders content here -->
-    </main>
+        <div class="flex items-center gap-2 md:gap-4">
+            <!-- Кнопка Додати Тварину -->
+            <button onclick="app.openAddAnimalModal()" class="hidden md:flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-3 py-1.5 rounded-full font-bold shadow-lg transform transition hover:scale-105 animate-pulse-slow border border-green-400 text-sm">
+                <span>+</span> Додати
+            </button>
 
-    <!-- Футер -->
-    <footer class="bg-slate-800/80 backdrop-blur-sm text-slate-400 py-6 text-center dark:bg-slate-950/80 text-sm border-t border-slate-700 mt-auto">
-        <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
-        <p class="text-slate-500 text-xs mt-1">Версія сайту: 1.6</p>
-    </footer>
+            <button onclick="app.navigate('encyclopedia')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Енциклопедія</button>
+            <button onclick="app.navigate('quiz')" class="hover:text-amber-400 transition font-semibold hidden lg:block">Вікторина</button>
 
-    <!-- Модальне вікно ПЕРЕГЛЯДУ -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-black bg-opacity-70 hidden z-[60] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300" onclick="app.closeModal(event)">
-        <div id="modal-content" class="bg-white dark:bg-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl transform transition-all scale-95 opacity-0">
-            <!-- Content via JS -->
+            <!-- КНОПКА НАЛАШТУВАНЬ -->
+            <button onclick="Settings.open()" class="p-2 rounded-full hover:bg-slate-700 transition focus:outline-none bg-slate-800/50 border border-slate-700" title="Налаштування">
+                <span class="text-lg">⚙️</span>
+            </button>
+
+            <!-- Theme Toggle Button -->
+            <button onclick="app.toggleTheme()" class="p-2 rounded-full hover:bg-slate-700 transition focus:outline-none bg-slate-800/50 border border-slate-700" title="Змінити тему">
+                <svg id="sun-icon" class="w-5 h-5 hidden text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="moon-icon" class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
         </div>
     </div>
+    <!-- Mobile Menu -->
+    <div class="md:hidden flex flex-wrap justify-around py-2 bg-slate-800 dark:bg-slate-900 border-t border-slate-700">
+        <button onclick="app.openAddAnimalModal()" class="w-full mb-2 mx-4 bg-green-600 text-white py-1 rounded-lg text-sm font-bold">➕ Додати тварину</button>
+        <button onclick="app.navigate('encyclopedia')" class="text-sm font-semibold hover:text-amber-400">📚 Енциклопедія</button>
+        <button onclick="app.navigate('quiz')" class="text-sm font-semibold hover:text-amber-400">🧠 Вікторина</button>
+    </div>
+</nav>
 
-    <!-- Модальне вікно ДОДАВАННЯ -->
-    <div id="add-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
-        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
-            <button onclick="app.closeAddModal()" class="absolute top-4 right-4 text-slate-500 hover:text-red-500 dark:text-slate-400 text-2xl font-bold">✕</button>
-            
-            <h2 class="text-2xl font-bold mb-2 text-slate-800 dark:text-white flex items-center gap-2">
-                <span class="bg-green-100 text-green-600 p-2 rounded-lg">➕</span> Додати нову тварину
+<!-- Основний контент -->
+<main id="app" class="flex-grow container mx-auto px-4 py-6 relative z-10">
+    <!-- JS renders content here -->
+</main>
+
+<!-- Футер -->
+<footer class="bg-slate-800/80 backdrop-blur-sm text-slate-400 py-6 text-center dark:bg-slate-950/80 text-sm border-t border-slate-700 mt-auto">
+    <p>© 2025 PaleoWorld. Інтерактивна освітня платформа.</p>
+    <p class="text-slate-500 text-xs mt-1">Версія сайту: 2.1</p>
+</footer>
+
+<!-- МОДАЛЬНЕ ВІКНО НАЛАШТУВАНЬ -->
+<div id="settings-modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center" style="pointer-events: none;">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full shadow-2xl p-0 relative border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto" style="pointer-events: auto;">
+
+        <!-- HEADER (Draggable) -->
+        <div id="settings-header" class="bg-slate-100 dark:bg-slate-900 p-4 rounded-t-2xl cursor-move flex justify-between items-center border-b border-slate-200 dark:border-slate-700">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <span>⚙️</span> Налаштування
             </h2>
-            
-            <p class="text-slate-500 dark:text-slate-400 mb-6 bg-slate-100 dark:bg-slate-700 p-3 rounded-lg border-l-4 border-green-500">
-                🌱 <b>Всі поля необов'язкові!</b> Заповніть лише те, що знаєте або хочете. <br>
-                Якщо ви залишите поле порожнім, ми підставимо щось загадкове замість нього.
-            </p>
-            
-            <form id="add-animal-form" onsubmit="app.handleAnimalSubmit(event)" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="Settings.close()" class="text-slate-500 hover:text-red-500 dark:text-slate-400 text-xl font-bold px-2">✕</button>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- 1. ФОН -->
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+                <h3 class="text-xs font-bold text-amber-600 dark:text-amber-500 mb-3 uppercase tracking-wider">Анімація Фону</h3>
+
+                <div class="grid grid-cols-2 gap-2 mb-4">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Назва тварини</label>
-                        <input type="text" name="name" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Наприклад: Велоцираптор">
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Ефект</label>
+                        <select id="settings-effect-select" onchange="Settings.onChange()" class="w-full bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-white p-2 rounded-lg border border-slate-300 dark:border-slate-600">
+                            <option value="particles">✨ Частинки</option>
+                            <option value="embers">🫧 Іскри</option>
+                            <option value="snow">❄️ Сніг</option>
+                            <option value="spiral">🌀 Спіраль</option>
+                            <option value="warp">🚀 Гіперпростір</option>
+                            <option value="matrix">💻 Матриця</option>
+                            <option value="asteroids">☄️ Астероїди</option>
+                            <option value="dino_world">🦕 Дино Світ</option>
+                            <option value="dna_flow">🧬 ДНК</option>
+                            <option value="geometry">🔷 Геометрія</option>
+                        </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Категорія</label>
-                        <select name="category" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                            <option value="dino">Динозавр 🦕</option>
-                            <option value="reptile">Рептилія 🦎</option>
-                            <option value="water">Водний 🦈</option>
-                            <option value="bird">Птах 🦅</option>
-                            <option value="mammal">Ссавець 🦣</option>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Форма</label>
+                        <select id="settings-shape-select" onchange="Settings.onChange()" class="w-full bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-white p-2 rounded-lg border border-slate-300 dark:border-slate-600">
+                            <option value="circle">● Коло</option>
+                            <option value="square">■ Квадрат</option>
+                            <option value="triangle">▲ Трикутник</option>
+                            <option value="star">★ Зірка</option>
+                            <option value="mixed">? Мікс</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Слайдери Фону -->
+                <div class="space-y-3">
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Тип (підзаголовок)</label>
-                        <input type="text" name="type" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижий динозавр">
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Щільність</label><span id="val-bg-density" class="text-xs font-bold text-amber-500">1.0x</span></div>
+                        <input type="range" id="slider-bg-density" min="0.1" max="3.0" step="0.1" value="1.0" oninput="Settings.onChange()">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Період</label>
-                        <input type="text" name="period" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: 75 млн років тому">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Вага (кг)</label>
-                        <input type="number" name="weight" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="1000">
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Швидкість</label><span id="val-bg-speed" class="text-xs font-bold text-amber-500">1.0x</span></div>
+                        <input type="range" id="slider-bg-speed" min="0.1" max="5.0" step="0.1" value="1.0" oninput="Settings.onChange()">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Дієта</label>
-                        <input type="text" name="diet" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижак 🥩">
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Розмір</label><span id="val-bg-size" class="text-xs font-bold text-amber-500">1.0x</span></div>
+                        <input type="range" id="slider-bg-size" min="0.5" max="3.0" step="0.1" value="1.0" oninput="Settings.onChange()">
                     </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Опис</label>
-                    <textarea name="desc" rows="3" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Детальний опис тварини..."></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Цікавий факт</label>
-                    <textarea name="funFact" rows="2" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Чи знали ви, що..."></textarea>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- НОВІ СЛАЙДЕРИ -->
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Іконка (Емодзі)</label>
-                        <input type="text" name="icon" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="🦖">
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Прозорість</label><span id="val-bg-opacity" class="text-xs font-bold text-amber-500">50%</span></div>
+                        <input type="range" id="slider-bg-opacity" min="0.1" max="1.0" step="0.1" value="0.5" oninput="Settings.onChange()">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Зображення</label>
-                        <input type="file" id="animal-image-input" accept="image/*" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
-                        <p class="text-xs text-slate-500 mt-1">Виберіть файл зображення.</p>
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Радіус миші</label><span id="val-bg-interact" class="text-xs font-bold text-amber-500">1.0x</span></div>
+                        <input type="range" id="slider-bg-interact" min="0.5" max="3.0" step="0.5" value="1.0" oninput="Settings.onChange()">
                     </div>
                 </div>
+            </div>
 
-                <button type="submit" id="submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-[1.02] mt-4 flex items-center justify-center gap-2">
-                    <span>Зберегти та Надіслати</span> <span>✉️</span>
+            <!-- 2. ГЕРОЙ -->
+            <div class="pb-2">
+                <h3 class="text-xs font-bold text-amber-600 dark:text-amber-500 mb-3 uppercase tracking-wider">Герой (Дино)</h3>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Ефект перетворення</label>
+                    <select id="settings-hero-effect-select" onchange="Settings.onChange()" class="w-full bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-white p-2 rounded-lg border border-slate-300 dark:border-slate-600">
+                        <option value="flash">⚡ Спалах</option>
+                        <option value="flip">🤸 Сальто (Нове!)</option>
+                        <option value="neon">✨ Неон (Нове!)</option>
+                        <option value="wobble">🍮 Желе (Нове!)</option>
+                        <option value="zoom">🔍 Перезавантаження (Нове!)</option>
+                        <option value="blur">🌫️ Туман (Нове!)</option>
+                        <option value="spin">🌀 Вихор</option>
+                        <option value="glitch">👾 Глюк</option>
+                        <option value="squeeze">🎈 Сплющення</option>
+                        <option value="fade">👻 Привид</option>
+                    </select>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Час стрибка</label><span id="val-hero-speed" class="text-xs font-bold text-slate-700 dark:text-slate-200">1.0s</span></div>
+                        <input type="range" id="slider-hero-speed" min="0.3" max="3.0" step="0.1" value="1.0" oninput="Settings.onChange()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Розмір</label><span id="val-hero-size" class="text-xs font-bold text-slate-700 dark:text-slate-200">1.0x</span></div>
+                        <input type="range" id="slider-hero-size" min="0.5" max="2.0" step="0.1" value="1.0" oninput="Settings.onChange()">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1"><label class="text-xs text-slate-500">Момент перетворення</label><span id="val-hero-phase" class="text-xs font-bold text-slate-700 dark:text-slate-200">0%</span></div>
+                        <input type="range" id="slider-hero-phase" min="0.0" max="0.9" step="0.1" value="0.0" oninput="Settings.onChange()">
+                        <div class="flex justify-between text-[9px] text-slate-400 mt-1"><span>Низ</span><span>Верх</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- КНОПКИ -->
+            <div class="pt-2 flex gap-2">
+                <button onclick="Settings.saveConfig()" class="flex-1 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold shadow-md flex items-center justify-center gap-1">
+                    <span>💾</span> Зберегти
                 </button>
-            </form>
+                <button onclick="Settings.resetDefaults()" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs">Скинути</button>
+            </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="animals_data.js"></script>
-    <script src="quiz_data.js"></script>
-    <script src="animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ -->
-    <script src="hero_animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ ГЕРОЯ -->
+<!-- Модальне вікно ДОДАВАННЯ -->
+<div id="add-modal-backdrop" class="fixed inset-0 bg-black bg-opacity-80 hidden z-[70] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 relative">
+        <button onclick="app.closeAddModal()" class="absolute top-4 right-4 text-slate-500 hover:text-red-500 dark:text-slate-400 text-2xl font-bold">✕</button>
 
-    <script>
-        // ==============================================================
-        // КОНФІГУРАЦІЯ EMAILJS
-        // ==============================================================
-        const EMAILJS_CONFIG = {
-            SERVICE_ID: "extinct_animals",
-            TEMPLATE_ID: "template_w5r8157",
-            PUBLIC_KEY: "5_SWc-bNnTDtdWRkv"
-        };
+        <h2 class="text-2xl font-bold mb-2 text-slate-800 dark:text-white flex items-center gap-2">
+            <span class="bg-green-100 text-green-600 p-2 rounded-lg">➕</span> Додати нову тварину
+        </h2>
 
-        const app = {
-            state: {
-                view: 'home',
-                searchTerm: '',
-                categoryFilter: 'all',
-                currentQuizQuestions: [],
-                quizIndex: 0,
-                score: 0,
-                quizAnswered: false,
-                isDark: false,
-                customAnimals: []
-                // heroEmojis більше не потрібні тут, вони в hero_animation.js
-            },
+        <p class="text-slate-500 dark:text-slate-400 mb-6 bg-slate-100 dark:bg-slate-700 p-3 rounded-lg border-l-4 border-green-500">
+            🌱 <b>Всі поля необов'язкові!</b> Заповніть лише те, що знаєте або хочете. <br>
+            Якщо ви залишите поле порожнім, ми підставимо щось загадкове замість нього.
+        </p>
 
-            init() {
-                // Init Theme
-                this.initTheme();
-                
-                // Init Background Animation
-                if (typeof bgAnimation !== 'undefined') {
-                    bgAnimation.init();
-                }
+        <form id="add-animal-form" onsubmit="app.handleAnimalSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Назва тварини</label>
+                    <input type="text" name="name" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Наприклад: Велоцираптор">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Категорія</label>
+                    <select name="category" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                        <option value="dino">Динозавр 🦕</option>
+                        <option value="reptile">Рептилія 🦎</option>
+                        <option value="water">Водний 🦈</option>
+                        <option value="bird">Птах 🦅</option>
+                        <option value="mammal">Ссавець 🦣</option>
+                    </select>
+                </div>
+            </div>
 
-                // Init Hero Animation
-                if (typeof HeroDino !== 'undefined') {
-                    HeroDino.init();
-                }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Тип (підзаголовок)</label>
+                    <input type="text" name="type" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижий динозавр">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Період</label>
+                    <input type="text" name="period" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: 75 млн років тому">
+                </div>
+            </div>
 
-                // Init EmailJS
-                if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
-                    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
-                }
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Вага (кг)</label>
+                    <input type="number" name="weight" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="1000">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Дієта</label>
+                    <input type="text" name="diet" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Напр: Хижак 🥩">
+                </div>
+            </div>
 
-                // Check Data
-                if (typeof window.animals === 'undefined' || typeof window.quizData === 'undefined') {
-                    document.getElementById('app').innerHTML = `
+            <div>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Опис</label>
+                <textarea name="desc" rows="3" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Детальний опис тварини..."></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Цікавий факт</label>
+                <textarea name="funFact" rows="2" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Чи знали ви, що..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Іконка (Емодзі)</label>
+                    <input type="text" name="icon" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="🦖">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Зображення</label>
+                    <input type="file" id="animal-image-input" accept="image/*" class="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600 dark:text-white">
+                    <p class="text-xs text-slate-500 mt-1">Виберіть файл зображення.</p>
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-[1.02] mt-4 flex items-center justify-center gap-2">
+                <span>Зберегти та Надіслати</span> <span>✉️</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="config.js" onerror="console.log('Конфігурація користувача не знайдена, використовуються стандартні налаштування.')"></script>
+<script src="animals_data.js"></script>
+<script src="quiz_data.js"></script>
+<script src="animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ -->
+<script src="hero_animation.js"></script> <!-- ПІДКЛЮЧЕННЯ АНІМАЦІЇ ГЕРОЯ -->
+<script src="settings.js"></script> <!-- ПІДКЛЮЧЕННЯ НАЛАШТУВАНЬ -->
+
+<script>
+    // ==============================================================
+    // КОНФІГУРАЦІЯ EMAILJS
+    // ==============================================================
+    const EMAILJS_CONFIG = {
+        SERVICE_ID: "extinct_animals",
+        TEMPLATE_ID: "template_w5r8157",
+        PUBLIC_KEY: "5_SWc-bNnTDtdWRkv"
+    };
+
+    const app = {
+        state: {
+            view: 'home',
+            searchTerm: '',
+            categoryFilter: 'all',
+            currentQuizQuestions: [],
+            quizIndex: 0,
+            score: 0,
+            quizAnswered: false,
+            isDark: false,
+            customAnimals: []
+        },
+
+        init() {
+            // Init Theme
+            this.initTheme();
+
+            // Init Background Animation
+            if (typeof bgAnimation !== 'undefined') {
+                bgAnimation.init();
+            }
+
+            // Init Settings (Лабораторія)
+            if (typeof Settings !== 'undefined') {
+                Settings.init();
+            }
+
+            // Init Hero Animation
+            if (typeof HeroDino !== 'undefined') {
+                HeroDino.init();
+            }
+
+            // Init EmailJS
+            if (window.emailjs && EMAILJS_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+                emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+            }
+
+            // Check Data
+            if (typeof window.animals === 'undefined' || typeof window.quizData === 'undefined') {
+                document.getElementById('app').innerHTML = `
                         <div class="text-center p-10 text-red-600 bg-red-100 rounded-xl dark:bg-red-900 dark:text-red-200">
                             <h2 class="text-2xl font-bold mb-2">Помилка завантаження даних!</h2>
                             <p>Переконайтеся, що файли <b>animals_data.js</b> та <b>quiz_data.js</b> знаходяться поруч.</p>
                         </div>`;
-                    return;
+                return;
+            }
+
+            this.loadCustomAnimals();
+            this.render();
+        },
+
+        changeAnimation(effectName) {
+            if (typeof bgAnimation !== 'undefined') {
+                bgAnimation.setEffect(effectName);
+            }
+        },
+
+        loadCustomAnimals() {
+            const stored = localStorage.getItem('paleo_custom_animals');
+            if (stored) {
+                try {
+                    this.state.customAnimals = JSON.parse(stored);
+                } catch (e) {
+                    console.error("Помилка читання LocalStorage", e);
                 }
+            }
+        },
 
-                this.loadCustomAnimals();
-                this.render();
-            },
+        getAllAnimals() {
+            return [...(window.animals || []), ...this.state.customAnimals];
+        },
 
-            changeAnimation(effectName) {
-                if (typeof bgAnimation !== 'undefined') {
-                    bgAnimation.setEffect(effectName);
-                }
-            },
+        // --- THEME LOGIC ---
+        initTheme() {
+            const userPref = localStorage.getItem('theme');
+            const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (userPref === 'dark' || (!userPref && systemPref)) {
+                this.state.isDark = true;
+                document.documentElement.classList.add('dark');
+            } else {
+                this.state.isDark = false;
+                document.documentElement.classList.remove('dark');
+            }
+            this.updateThemeIcon();
+        },
 
-            loadCustomAnimals() {
-                const stored = localStorage.getItem('paleo_custom_animals');
-                if (stored) {
-                    try {
-                        this.state.customAnimals = JSON.parse(stored);
-                    } catch (e) {
-                        console.error("Помилка читання LocalStorage", e);
-                    }
-                }
-            },
+        toggleTheme() {
+            this.state.isDark = !this.state.isDark;
+            if (this.state.isDark) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            this.updateThemeIcon();
+        },
 
-            getAllAnimals() {
-                return [...(window.animals || []), ...this.state.customAnimals];
-            },
+        updateThemeIcon() {
+            const sun = document.getElementById('sun-icon');
+            const moon = document.getElementById('moon-icon');
+            if (this.state.isDark) {
+                sun.classList.remove('hidden');
+                moon.classList.add('hidden');
+            } else {
+                sun.classList.add('hidden');
+                moon.classList.remove('hidden');
+            }
+        },
 
-            // --- THEME LOGIC ---
-            initTheme() {
-                const userPref = localStorage.getItem('theme');
-                const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (userPref === 'dark' || (!userPref && systemPref)) {
-                    this.state.isDark = true;
-                    document.documentElement.classList.add('dark');
-                } else {
-                    this.state.isDark = false;
-                    document.documentElement.classList.remove('dark');
-                }
-                this.updateThemeIcon();
-            },
+        navigate(view) {
+            this.state.view = view;
+            if (view === 'quiz') this.startNewQuiz();
+            if (view === 'encyclopedia') {
+                this.state.searchTerm = '';
+                this.state.categoryFilter = 'all';
+            }
+            this.render();
+        },
 
-            toggleTheme() {
-                this.state.isDark = !this.state.isDark;
-                if (this.state.isDark) {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', 'light');
-                }
-                this.updateThemeIcon();
-            },
+        startNewQuiz() {
+            this.state.quizIndex = 0;
+            this.state.score = 0;
+            this.state.quizAnswered = false;
+            if (window.quizData && window.quizData.length > 0) {
+                const shuffled = [...window.quizData].sort(() => 0.5 - Math.random());
+                this.state.currentQuizQuestions = shuffled.slice(0, 10);
+            } else {
+                this.state.currentQuizQuestions = [];
+            }
+        },
 
-            updateThemeIcon() {
-                const sun = document.getElementById('sun-icon');
-                const moon = document.getElementById('moon-icon');
-                if (this.state.isDark) {
-                    sun.classList.remove('hidden');
-                    moon.classList.add('hidden');
-                } else {
-                    sun.classList.add('hidden');
-                    moon.classList.remove('hidden');
-                }
-            },
+        render() {
+            const main = document.getElementById('app');
+            main.innerHTML = '';
+            switch (this.state.view) {
+                case 'home': this.renderHome(main); break;
+                case 'encyclopedia': this.renderEncyclopedia(main); break;
+                case 'quiz': this.renderQuiz(main); break;
+            }
+            window.scrollTo(0, 0);
+        },
 
-            navigate(view) {
-                this.state.view = view;
-                if (view === 'quiz') this.startNewQuiz();
-                if (view === 'encyclopedia') {
-                    this.state.searchTerm = '';
-                    this.state.categoryFilter = 'all';
-                }
-                this.render();
-            },
-
-            startNewQuiz() {
-                this.state.quizIndex = 0;
-                this.state.score = 0;
-                this.state.quizAnswered = false;
-                if (window.quizData && window.quizData.length > 0) {
-                    const shuffled = [...window.quizData].sort(() => 0.5 - Math.random());
-                    this.state.currentQuizQuestions = shuffled.slice(0, 10);
-                } else {
-                    this.state.currentQuizQuestions = [];
-                }
-            },
-
-            render() {
-                const main = document.getElementById('app');
-                main.innerHTML = '';
-                switch (this.state.view) {
-                    case 'home': this.renderHome(main); break;
-                    case 'encyclopedia': this.renderEncyclopedia(main); break;
-                    case 'quiz': this.renderQuiz(main); break;
-                }
-                window.scrollTo(0, 0);
-            },
-
-            renderHome(container) {
-                const count = this.getAllAnimals().length;
-                container.innerHTML = `
+        renderHome(container) {
+            const count = this.getAllAnimals().length;
+            container.innerHTML = `
                     <div class="flex flex-col items-center justify-center min-h-[80vh] text-center fade-in">
-                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick та зміна емодзі тепер в hero_animation.js -->
+                        <!-- СТРИБАЮЧИЙ ГЕРОЙ: onclick змінює фон -->
                         <div id="hero-dino" class="text-8xl mb-6 animate-bounce drop-shadow-xl cursor-pointer select-none">🦖</div>
-                             
+
                         <h1 class="text-4xl md:text-6xl font-extrabold text-slate-800 dark:text-white mb-4 drop-shadow-sm">
                             Ласкаво просимо в <br/><span class="text-amber-500">Світ Вимерлих Тварин</span>
                         </h1>
@@ -374,25 +514,24 @@
                         </div>
                     </div>
                 `;
-                
-                // Перезапуск Hero Animation при рендері Home
-                if (typeof HeroDino !== 'undefined') {
-                    // Трохи зачекати, поки DOM оновиться
-                    setTimeout(() => HeroDino.init(), 50);
-                }
-            },
 
-            renderEncyclopedia(container) {
-                const filtered = this.getAllAnimals().filter(a => {
-                    const matchSearch = a.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
-                    const matchCat = this.state.categoryFilter === 'all' || a.category === this.state.categoryFilter;
-                    return matchSearch && matchCat;
-                });
+            // Перезапуск Hero Animation
+            if (typeof HeroDino !== 'undefined') {
+                setTimeout(() => HeroDino.init(), 50);
+            }
+        },
 
-                container.innerHTML = `
+        renderEncyclopedia(container) {
+            const filtered = this.getAllAnimals().filter(a => {
+                const matchSearch = a.name.toLowerCase().includes(this.state.searchTerm.toLowerCase());
+                const matchCat = this.state.categoryFilter === 'all' || a.category === this.state.categoryFilter;
+                return matchSearch && matchCat;
+            });
+
+            container.innerHTML = `
                     <div class="fade-in">
                         <div class="mb-8 flex flex-col md:flex-row gap-4 items-center justify-between bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                            <input type="text" placeholder="Пошук..." 
+                            <input type="text" placeholder="Пошук..."
                                 class="w-full md:w-1/3 border border-slate-300 dark:border-slate-600 bg-transparent dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                 value="${this.state.searchTerm}" oninput="app.handleSearch(this.value)">
                             <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
@@ -410,20 +549,20 @@
                         ${filtered.length === 0 ? '<div class="text-center text-slate-500 text-xl mt-10">Нічого не знайдено 🕵️‍♂️</div>' : ''}
                     </div>
                 `;
-            },
+        },
 
-            renderFilterBtn(key, label) {
-                const active = this.state.categoryFilter === key;
-                const baseClass = "px-4 py-2 rounded-full font-semibold transition whitespace-nowrap";
-                const activeClass = "bg-amber-500 text-white shadow-md";
-                const inactiveClass = "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600";
-                return `<button onclick="app.setFilter('${key}')" class="${baseClass} ${active ? activeClass : inactiveClass}">${label}</button>`;
-            },
+        renderFilterBtn(key, label) {
+            const active = this.state.categoryFilter === key;
+            const baseClass = "px-4 py-2 rounded-full font-semibold transition whitespace-nowrap";
+            const activeClass = "bg-amber-500 text-white shadow-md";
+            const inactiveClass = "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600";
+            return `<button onclick="app.setFilter('${key}')" class="${baseClass} ${active ? activeClass : inactiveClass}">${label}</button>`;
+        },
 
-            createAnimalCard(animal) {
-                const isBase64 = animal.image && animal.image.startsWith('data:image');
-                const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
-                return `
+        createAnimalCard(animal) {
+            const isBase64 = animal.image && animal.image.startsWith('data:image');
+            const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
+            return `
                     <div class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm rounded-xl shadow-md border border-slate-100 dark:border-slate-700 overflow-hidden card-hover cursor-pointer flex flex-col h-full" onclick="app.openModal(${animal.id})">
                         <div class="h-48 w-full bg-slate-200 dark:bg-slate-700 relative flex items-center justify-center overflow-hidden">
                              <img src="${imageSrc}" alt="${animal.name}" class="w-full h-full object-cover absolute inset-0 z-10" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
@@ -444,27 +583,27 @@
                         </div>
                     </div>
                 `;
-            },
+        },
 
-            getCategoryIcon(cat) {
-                const icons = { dino: '🦕', reptile: '🦎', water: '💧', bird: '🪶', mammal: '🦴' };
-                return icons[cat] || '❓';
-            },
+        getCategoryIcon(cat) {
+            const icons = { dino: '🦕', reptile: '🦎', water: '💧', bird: '🪶', mammal: '🦴' };
+            return icons[cat] || '❓';
+        },
 
-            handleSearch(val) { this.state.searchTerm = val; this.render(); },
-            setFilter(cat) { this.state.categoryFilter = cat; this.render(); },
+        handleSearch(val) { this.state.searchTerm = val; this.render(); },
+        setFilter(cat) { this.state.categoryFilter = cat; this.render(); },
 
-            openModal(id) {
-                const allAnimals = this.getAllAnimals();
-                const animal = allAnimals.find(a => a.id === id);
-                if (!animal) return;
-                
-                const isBase64 = animal.image && animal.image.startsWith('data:image');
-                const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
+        openModal(id) {
+            const allAnimals = this.getAllAnimals();
+            const animal = allAnimals.find(a => a.id === id);
+            if (!animal) return;
 
-                const modal = document.getElementById('modal-backdrop');
-                const content = document.getElementById('modal-content');
-                content.innerHTML = `
+            const isBase64 = animal.image && animal.image.startsWith('data:image');
+            const imageSrc = isBase64 ? animal.image : `images/${animal.image}`;
+
+            const modal = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+            content.innerHTML = `
                     <div class="relative">
                         <button onclick="app.closeModal()" class="absolute top-4 right-4 bg-white dark:bg-slate-700 text-slate-800 dark:text-white rounded-full p-2 shadow-lg z-20 hover:bg-slate-100 dark:hover:bg-slate-600 transition">✕</button>
                         <div class="h-64 md:h-80 w-full bg-slate-200 dark:bg-slate-700 relative overflow-hidden">
@@ -491,151 +630,173 @@
                         </div>
                     </div>
                 `;
-                modal.classList.remove('hidden');
-                setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
-            },
+            modal.classList.remove('hidden');
+            setTimeout(() => { content.classList.remove('scale-95', 'opacity-0'); content.classList.add('scale-100', 'opacity-100'); }, 10);
+        },
 
-            closeModal(e) {
-                if (e && !e.target.closest('#modal-backdrop') && !e.target.classList.contains('absolute')) return;
-                if (e && e.target.closest('#modal-content')) return;
-                const modal = document.getElementById('modal-backdrop');
-                const content = document.getElementById('modal-content');
-                content.classList.remove('scale-100', 'opacity-100');
-                content.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => { modal.classList.add('hidden'); }, 300);
-            },
+        closeModal(e) {
+            if (e && !e.target.closest('#modal-backdrop') && !e.target.classList.contains('absolute')) return;
+            if (e && e.target.closest('#modal-content')) return;
+            const modal = document.getElementById('modal-backdrop');
+            const content = document.getElementById('modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        },
 
-            // --- MODAL & FORM LOGIC ---
-            openAddAnimalModal() {
-                document.getElementById('add-modal-backdrop').classList.remove('hidden');
-            },
+        // --- MODAL & FORM LOGIC ---
+        openAddAnimalModal() {
+            document.getElementById('add-modal-backdrop').classList.remove('hidden');
+        },
 
-            closeAddModal() {
-                document.getElementById('add-modal-backdrop').classList.add('hidden');
-            },
+        closeAddModal() {
+            document.getElementById('add-modal-backdrop').classList.add('hidden');
+        },
 
-            async handleAnimalSubmit(e) {
-                e.preventDefault();
-                const form = e.target;
-                const btn = document.getElementById('submit-btn');
-                btn.disabled = true;
-                btn.innerHTML = 'Обробка...';
+        async handleAnimalSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerHTML = 'Обробка...';
 
-                // 1. Gather data
-                const newAnimal = {
-                    id: Date.now(),
-                    name: form.name.value || "Невідома Тварина",
-                    category: form.category.value || "dino",
-                    type: form.type.value || "Загадкова істота",
-                    period: form.period.value || "Невідома епоха",
-                    weight: Number(form.weight.value) || 0,
-                    diet: form.diet.value || "Всеїдний",
-                    desc: form.desc.value || "Про цю тварину поки що мало відомо, але вона точно була дивовижною!",
-                    funFact: form.funFact.value || "Вчені все ще досліджують цю істоту.",
-                    icon: form.icon.value || "❓",
-                    image: 'placeholder.jpg',
-                    coords: [0, 0]
-                };
+            // 1. Gather data
+            const newAnimal = {
+                id: Date.now(),
+                name: form.name.value || "Невідома Тварина",
+                category: form.category.value || "dino",
+                type: form.type.value || "Загадкова істота",
+                period: form.period.value || "Невідома епоха",
+                weight: Number(form.weight.value) || 0,
+                diet: form.diet.value || "Всеїдний",
+                desc: form.desc.value || "Про цю тварину поки що мало відомо, але вона точно була дивовижною!",
+                funFact: form.funFact.value || "Вчені все ще досліджують цю істоту.",
+                icon: form.icon.value || "❓",
+                image: 'placeholder.jpg',
+                coords: [0, 0]
+            };
 
-                // 2. Handle Image
-                const fileInput = document.getElementById('animal-image-input');
-                if (fileInput.files && fileInput.files[0]) {
-                    try {
-                        newAnimal.image = await this.toBase64(fileInput.files[0]);
-                    } catch (err) {
-                        console.error("Фото помилка", err);
-                    }
+            // 2. Handle Image
+            const fileInput = document.getElementById('animal-image-input');
+            let imageError = false;
+
+            if (fileInput.files && fileInput.files[0]) {
+                try {
+                    newAnimal.image = await this.toBase64(fileInput.files[0]);
+                } catch (err) {
+                    console.error("Фото помилка", err);
+                    imageError = true;
                 }
+            }
 
-                // 3. Save Locally
+            // 3. Save Locally
+            try {
                 this.state.customAnimals.push(newAnimal);
                 localStorage.setItem('paleo_custom_animals', JSON.stringify(this.state.customAnimals));
+            } catch (e) {
+                console.error("LocalStorage Error (Quota Exceeded?)", e);
+                // Якщо помилка (швидше за все через велику картинку), зберігаємо без картинки
+                if (newAnimal.image !== 'placeholder.jpg') {
+                    newAnimal.image = 'placeholder.jpg';
+                    this.state.customAnimals.pop(); // Прибираємо попередню спробу
+                    this.state.customAnimals.push(newAnimal);
+                    try {
+                        localStorage.setItem('paleo_custom_animals', JSON.stringify(this.state.customAnimals));
+                        alert("Увага: Фото було занадто великим, тварина збережена без фото.");
+                    } catch (e2) {
+                        alert("Помилка збереження. Сховище переповнене.");
+                        btn.disabled = false;
+                        btn.innerHTML = 'Зберегти та Надіслати ✉️';
+                        return;
+                    }
+                }
+            }
 
-                // 4. Generate Code Snippet for DB
-                const codeSnippet = `
+            // 4. Generate Code Snippet for DB
+            const codeSnippet = `
     {
-        id: ${newAnimal.id}, 
-        name: "${newAnimal.name}", 
-        category: "${newAnimal.category}", 
-        type: "${newAnimal.type}", 
-        period: "${newAnimal.period}", 
-        weight: ${newAnimal.weight}, 
-        diet: "${newAnimal.diet}", 
-        funFact: "${newAnimal.funFact}", 
-        desc: "${newAnimal.desc}", 
-        coords: [0, 0], 
+        id: ${newAnimal.id},
+        name: "${newAnimal.name}",
+        category: "${newAnimal.category}",
+        type: "${newAnimal.type}",
+        period: "${newAnimal.period}",
+        weight: ${newAnimal.weight},
+        diet: "${newAnimal.diet}",
+        funFact: "${newAnimal.funFact}",
+        desc: "${newAnimal.desc}",
+        coords: [0, 0],
         image: "image_name.jpg", // TODO: Додайте файл зображення в папку images/
-        icon: "${newAnimal.icon}" 
+        icon: "${newAnimal.icon}"
     },`;
 
-                // 5. Try EmailJS
-                let sentStatus = "Не налаштовано";
-                // Перевірка, що ID не дефолтний, тепер пройде успішно
-                if (EMAILJS_CONFIG.SERVICE_ID !== "YOUR_SERVICE_ID") {
-                    try {
-                        const templateParams = {
-                            to_email: "dad.rising@outlook.com",
-                            
-                            // Всі дані про тварину
-                            animal_name: newAnimal.name,
-                            animal_icon: newAnimal.icon,
-                            animal_type: newAnimal.type,
-                            animal_period: newAnimal.period,
-                            animal_weight: newAnimal.weight,
-                            animal_diet: newAnimal.diet,
-                            animal_desc: newAnimal.desc,
-                            animal_funFact: newAnimal.funFact,
-                            
-                            // Додаємо фрагмент коду
-                            code_snippet: codeSnippet,
-                            
-                            message: `Додано нову тварину! Ім'я: ${newAnimal.name}`
-                        };
-                        
-                        await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
-                        sentStatus = "Відправлено";
-                    } catch (error) {
-                        console.error("EmailJS Error:", error);
-                        sentStatus = "Помилка відправки (Перевірте консоль)";
-                    }
-                } else {
-                    console.log("EmailJS не налаштовано. Лист не відправлено.");
+            // 5. Try EmailJS
+            let sentStatus = "Не налаштовано";
+            // Перевірка, що ID не дефолтний, тепер пройде успішно
+            if (EMAILJS_CONFIG.SERVICE_ID !== "YOUR_SERVICE_ID") {
+                try {
+                    const templateParams = {
+                        to_email: "dad.rising@outlook.com",
+
+                        // Всі дані про тварину
+                        animal_name: newAnimal.name,
+                        animal_icon: newAnimal.icon,
+                        animal_type: newAnimal.type,
+                        animal_period: newAnimal.period,
+                        animal_weight: newAnimal.weight,
+                        animal_diet: newAnimal.diet,
+                        animal_desc: newAnimal.desc,
+                        animal_funFact: newAnimal.funFact,
+
+                        // Додаємо фрагмент коду
+                        code_snippet: codeSnippet,
+
+                        message: `Додано нову тварину! Ім'я: ${newAnimal.name}`
+                    };
+
+                    await emailjs.send(EMAILJS_CONFIG.SERVICE_ID, EMAILJS_CONFIG.TEMPLATE_ID, templateParams);
+                    sentStatus = "Відправлено";
+                } catch (error) {
+                    console.error("EmailJS Error:", error);
+                    sentStatus = "Помилка відправки (Перевірте консоль)";
                 }
+            } else {
+                console.log("EmailJS не налаштовано. Лист не відправлено.");
+            }
 
-                alert(`Тварину збережено! Статус Email: ${sentStatus}.`);
-                
-                form.reset();
-                btn.disabled = false;
-                btn.innerHTML = 'Зберегти та Надіслати ✉️';
-                this.closeAddModal();
-                this.navigate('encyclopedia');
-            },
+            alert(`Тварину збережено! Статус Email: ${sentStatus}.`);
 
-            toBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = error => reject(error);
-                });
-            },
+            form.reset();
+            btn.disabled = false;
+            btn.innerHTML = 'Зберегти та Надіслати ✉️';
+            this.closeAddModal();
+            this.navigate('encyclopedia');
+        },
 
-            // --- QUIZ ---
-            renderQuiz(container) {
-                const questions = this.state.currentQuizQuestions;
-                if (questions.length === 0) {
-                     container.innerHTML = `<div class="text-center mt-10 dark:text-white">Завантаження питань...</div>`;
-                     return;
-                }
-                if (this.state.quizIndex >= questions.length) { 
-                    this.renderQuizResult(container); 
-                    return; 
-                }
+        toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        },
 
-                const q = questions[this.state.quizIndex];
-                const progress = ((this.state.quizIndex) / questions.length) * 100;
-                
-                container.innerHTML = `
+        // --- QUIZ ---
+        renderQuiz(container) {
+            const questions = this.state.currentQuizQuestions;
+            if (questions.length === 0) {
+                container.innerHTML = `<div class="text-center mt-10 dark:text-white">Завантаження питань...</div>`;
+                return;
+            }
+            if (this.state.quizIndex >= questions.length) {
+                this.renderQuizResult(container);
+                return;
+            }
+
+            const q = questions[this.state.quizIndex];
+            const progress = ((this.state.quizIndex) / questions.length) * 100;
+
+            container.innerHTML = `
                     <div class="max-w-2xl mx-auto fade-in pt-4">
                         <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2.5 mb-6">
                             <div class="bg-amber-500 h-2.5 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
@@ -657,55 +818,55 @@
                         </div>
                     </div>
                 `;
-            },
+        },
 
-            handleAnswer(idx) {
-                if (this.state.quizAnswered) return;
-                this.state.quizAnswered = true;
-                const questions = this.state.currentQuizQuestions;
-                const q = questions[this.state.quizIndex];
-                const isCorrect = idx === q.correct;
-                if (isCorrect) this.state.score++;
-                
-                const btns = document.querySelectorAll('#options-container button');
-                btns.forEach((btn, i) => {
-                    btn.classList.remove('hover:border-amber-400', 'hover:bg-amber-50', 'dark:hover:bg-slate-700');
-                    if (i === q.correct) {
-                        btn.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-500', 'text-green-800', 'dark:text-green-100');
-                        btn.innerHTML += ' ✓';
-                    } else if (i === idx && !isCorrect) {
-                        btn.classList.add('bg-red-100', 'dark:bg-red-900', 'border-red-500', 'text-red-800', 'dark:text-red-100');
-                        btn.innerHTML += ' ✕';
-                    } else {
-                        btn.classList.add('opacity-50');
-                    }
-                });
+        handleAnswer(idx) {
+            if (this.state.quizAnswered) return;
+            this.state.quizAnswered = true;
+            const questions = this.state.currentQuizQuestions;
+            const q = questions[this.state.quizIndex];
+            const isCorrect = idx === q.correct;
+            if (isCorrect) this.state.score++;
 
-                const box = document.getElementById('explanation-box');
-                box.classList.remove('hidden', 'animate-pulse');
-                box.classList.add('fade-in');
-                const borderColor = isCorrect ? 'border-green-500' : 'border-red-500';
-                box.className = `mt-6 p-5 rounded-lg border-l-4 ${borderColor} bg-slate-50 dark:bg-slate-700 shadow-inner dark:text-slate-200`;
-                box.innerHTML = `<p class="font-bold mb-1 ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}">${isCorrect ? 'Чудово!' : 'Не зовсім...'}</p><p>${q.explanations[idx]}</p>`;
-                document.getElementById('next-btn').classList.remove('hidden');
-            },
+            const btns = document.querySelectorAll('#options-container button');
+            btns.forEach((btn, i) => {
+                btn.classList.remove('hover:border-amber-400', 'hover:bg-amber-50', 'dark:hover:bg-slate-700');
+                if (i === q.correct) {
+                    btn.classList.add('bg-green-100', 'dark:bg-green-900', 'border-green-500', 'text-green-800', 'dark:text-green-100');
+                    btn.innerHTML += ' ✓';
+                } else if (i === idx && !isCorrect) {
+                    btn.classList.add('bg-red-100', 'dark:bg-red-900', 'border-red-500', 'text-red-800', 'dark:text-red-100');
+                    btn.innerHTML += ' ✕';
+                } else {
+                    btn.classList.add('opacity-50');
+                }
+            });
 
-            nextQuestion() { 
-                this.state.quizIndex++; 
-                this.state.quizAnswered = false; 
-                this.renderQuiz(document.getElementById('app')); 
-            },
+            const box = document.getElementById('explanation-box');
+            box.classList.remove('hidden', 'animate-pulse');
+            box.classList.add('fade-in');
+            const borderColor = isCorrect ? 'border-green-500' : 'border-red-500';
+            box.className = `mt-6 p-5 rounded-lg border-l-4 ${borderColor} bg-slate-50 dark:bg-slate-700 shadow-inner dark:text-slate-200`;
+            box.innerHTML = `<p class="font-bold mb-1 ${isCorrect ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}">${isCorrect ? 'Чудово!' : 'Не зовсім...'}</p><p>${q.explanations[idx]}</p>`;
+            document.getElementById('next-btn').classList.remove('hidden');
+        },
 
-            renderQuizResult(container) {
-                const total = this.state.currentQuizQuestions.length;
-                const percent = (this.state.score / total) * 100;
-                let msg = "", emoji = "";
-                if (percent === 100) { msg = "Легендарний Палеонтолог!"; emoji = "🏆"; }
-                else if (percent >= 80) { msg = "Експерт Юрського періоду!"; emoji = "🦕"; }
-                else if (percent >= 50) { msg = "Допитливий дослідник!"; emoji = "🔎"; }
-                else { msg = "Початківець-археолог!"; emoji = "🥚"; }
+        nextQuestion() {
+            this.state.quizIndex++;
+            this.state.quizAnswered = false;
+            this.renderQuiz(document.getElementById('app'));
+        },
 
-                container.innerHTML = `
+        renderQuizResult(container) {
+            const total = this.state.currentQuizQuestions.length;
+            const percent = (this.state.score / total) * 100;
+            let msg = "", emoji = "";
+            if (percent === 100) { msg = "Легендарний Палеонтолог!"; emoji = "🏆"; }
+            else if (percent >= 80) { msg = "Експерт Юрського періоду!"; emoji = "🦕"; }
+            else if (percent >= 50) { msg = "Допитливий дослідник!"; emoji = "🔎"; }
+            else { msg = "Початківець-археолог!"; emoji = "🥚"; }
+
+            container.innerHTML = `
                     <div class="max-w-md mx-auto text-center fade-in bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl mt-10 border border-slate-100 dark:border-slate-700">
                         <div class="text-9xl mb-4">${emoji}</div>
                         <h2 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">${msg}</h2>
@@ -717,10 +878,10 @@
                         </div>
                     </div>
                 `;
-            }
-        };
+        }
+    };
 
-        document.addEventListener('DOMContentLoaded', () => { app.init(); });
-    </script>
+    document.addEventListener('DOMContentLoaded', () => { app.init(); });
+</script>
 </body>
 </html>

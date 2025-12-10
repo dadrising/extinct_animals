@@ -1,6 +1,5 @@
 // =============================================================================
-// РОЗШИРЕНА АНІМАЦІЯ ФОНУ v3.1 (Fixed)
-// Ефекти: particles, embers, dino_world, geometry, asteroids, spiral, snow, warp, matrix, dna_flow
+// АНІМАЦІЯ ФОНУ v6.0 (More Settings)
 // =============================================================================
 
 const bgAnimation = {
@@ -9,13 +8,22 @@ const bgAnimation = {
     particles: [],
     mouse: { x: null, y: null },
     effectName: 'particles',
-    
-    // Повний список ефектів
+
+    // ГЛОБАЛЬНІ НАСТРОЙКИ
+    config: {
+        density: 1.0,
+        speed: 1.0,
+        size: 1.0,
+        shape: 'circle',
+        connect: true,
+        // НОВІ:
+        opacity: 0.5,       // Базова прозорість
+        interaction: 1.0    // Радіус реакції на мишу
+    },
+
     effects: ['particles', 'embers', 'dino_world', 'geometry', 'asteroids', 'spiral', 'snow', 'warp', 'matrix', 'dna_flow'],
-    
     animationFrameId: null,
-    cols: 0, // Для матриці
-    yPos: [], // Для матриці
+    cols: 0, yPos: [],
 
     init() {
         this.canvas = document.getElementById('bg-canvas');
@@ -31,6 +39,11 @@ const bgAnimation = {
 
         window.addEventListener('resize', () => this.resize());
 
+        if (typeof UserConfig !== 'undefined' && UserConfig.bg) {
+            this.config = { ...this.config, ...UserConfig.bg };
+            this.effectName = UserConfig.effect || 'particles';
+        }
+
         this.createParticles();
         this.animate();
     },
@@ -38,18 +51,22 @@ const bgAnimation = {
     setEffect(name) {
         this.effectName = name;
         this.createParticles();
+        const settingsSelect = document.getElementById('settings-effect-select');
+        if(settingsSelect) settingsSelect.value = name;
+        const navSelect = document.getElementById('animation-select');
+        if(navSelect) navSelect.value = name;
     },
 
     nextEffect() {
         const currentIndex = this.effects.indexOf(this.effectName);
         const nextIndex = (currentIndex + 1) % this.effects.length;
-        const nextEffectName = this.effects[nextIndex];
-        this.setEffect(nextEffectName);
-        
-        const select = document.getElementById('animation-select');
-        if(select) select.value = nextEffectName;
-        
-        return nextEffectName;
+        this.setEffect(this.effects[nextIndex]);
+        return this.effects[nextIndex];
+    },
+
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+        this.createParticles();
     },
 
     resize() {
@@ -60,31 +77,24 @@ const bgAnimation = {
 
     createParticles() {
         this.particles = [];
-        let count = (window.innerWidth * window.innerHeight) / 9000;
+        let count = ((window.innerWidth * window.innerHeight) / 9000) * this.config.density;
 
-        // Спеціальні налаштування кількості
         if (this.effectName === 'asteroids') count /= 3;
-        if (this.effectName === 'warp') count = 200; 
-        if (this.effectName === 'snow') count *= 2; 
+        if (this.effectName === 'warp') count = 200 * this.config.density;
+        if (this.effectName === 'snow') count *= 2;
 
-        // Ініціалізація Матриці
         if (this.effectName === 'matrix') {
             this.cols = Math.floor(this.canvas.width / 20);
             this.yPos = Array(this.cols).fill(0);
             return;
         }
 
-        // Ініціалізація ДНК
         if (this.effectName === 'dna_flow') {
-            // Створюємо пари точок для подвійної спіралі
-            count = Math.ceil(this.canvas.width / 40) + 5; // Кількість ланок + запас
+            count = Math.ceil(this.canvas.width / 40) + 5;
             for (let i = 0; i < count; i++) {
                 this.particles.push({
-                    x: i * 40, 
-                    y: this.canvas.height / 2,
-                    angle: i * 0.3, // Крок спіралі
-                    speed: 0.02,
-                    type: 'base_pair'
+                    x: i * 40, y: this.canvas.height / 2, angle: i * 0.3,
+                    speed: 0.02 * this.config.speed, type: 'base_pair'
                 });
             }
             return;
@@ -97,54 +107,47 @@ const bgAnimation = {
             let p = {
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 2 + 1,
-                speedX: (Math.random() - 0.5) * 0.5,
-                speedY: (Math.random() - 0.5) * 0.5,
-                opacity: Math.random() * 0.5 + 0.1,
+                size: (Math.random() * 2 + 1) * this.config.size,
+                speedX: ((Math.random() - 0.5) * 0.5) * this.config.speed,
+                speedY: ((Math.random() - 0.5) * 0.5) * this.config.speed,
+                // Використовуємо налаштування прозорості
+                opacity: (Math.random() * 0.5 + 0.1) * this.config.opacity,
                 angle: Math.random() * Math.PI * 2,
-                spinSpeed: (Math.random() - 0.5) * 0.02,
+                spinSpeed: ((Math.random() - 0.5) * 0.02) * this.config.speed,
                 icon: icons[Math.floor(Math.random() * icons.length)],
-                shapeType: Math.floor(Math.random() * 3),
+                shape: this.config.shape === 'mixed'
+                    ? ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)]
+                    : this.config.shape,
                 depth: Math.random() * 0.5 + 0.5,
                 wobble: Math.random() * Math.PI * 2,
-                z: Math.random() * this.canvas.width, // Warp depth
-                radius: Math.random() * 200 + 50, // Spiral radius
+                z: Math.random() * this.canvas.width,
+                radius: (Math.random() * 200 + 50) * this.config.size,
                 spiralAngle: Math.random() * Math.PI * 2,
                 type: 'standard'
             };
 
-            // Налаштування швидкостей
+            if (p.opacity > 1) p.opacity = 1;
+
             if (this.effectName === 'embers') {
-                p.speedY = -(Math.random() * 1 + 0.5);
-                p.size = Math.random() * 4 + 1;
-            } 
-            else if (this.effectName === 'dino_world') {
-                p.size = (Math.random() * 20 + 10) * p.depth;
-                p.speedX = (Math.random() - 0.5) * 0.5 * p.depth;
-                p.speedY = (Math.random() - 0.5) * 0.5 * p.depth;
-            }
-            else if (this.effectName === 'asteroids') {
-                // 10% - падаючі зірки, 90% - астероїди
+                p.speedY = -(Math.random() + 0.5) * this.config.speed;
+                p.size = (Math.random() * 4 + 1) * this.config.size;
+            } else if (this.effectName === 'dino_world') {
+                p.size = ((Math.random() * 20 + 10) * p.depth) * this.config.size;
+            } else if (this.effectName === 'asteroids') {
                 if (Math.random() > 0.9) {
                     p.type = 'star';
                     p.x = Math.random() * this.canvas.width;
                     p.y = Math.random() * this.canvas.height * 0.5;
-                    p.size = Math.random() * 2 + 1;
-                    p.speedX = -5 - Math.random() * 5; 
-                    p.speedY = 3 + Math.random() * 3;  
+                    p.speedX = (-5 - Math.random() * 5) * this.config.speed;
+                    p.speedY = (3 + Math.random() * 3) * this.config.speed;
                 } else {
                     p.type = 'asteroid';
                     p.icon = rocks[Math.floor(Math.random() * rocks.length)];
-                    p.size = Math.random() * 15 + 10;
-                    p.speedX = (Math.random() - 0.5) * 0.3;
-                    p.speedY = (Math.random() - 0.5) * 0.3;
+                    p.size = (Math.random() * 15 + 10) * this.config.size;
                 }
-            }
-            else if (this.effectName === 'snow') {
-                p.speedY = Math.random() * 1.5 + 0.5; 
-                p.speedX = (Math.random() - 0.5) * 0.5;
-                p.size = Math.random() * 3 + 2;
-                p.opacity = Math.random() * 0.8 + 0.2;
+            } else if (this.effectName === 'snow') {
+                p.speedY = (Math.random() * 1.5 + 0.5) * this.config.speed;
+                p.size = (Math.random() * 3 + 2) * this.config.size;
             }
 
             this.particles.push(p);
@@ -152,7 +155,6 @@ const bgAnimation = {
     },
 
     animate() {
-        // Ефект шлейфу для деяких режимів
         if (['matrix', 'warp', 'asteroids'].includes(this.effectName)) {
             this.ctx.fillStyle = document.documentElement.classList.contains('dark') ? 'rgba(15, 23, 42, 0.2)' : 'rgba(248, 250, 252, 0.2)';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -161,10 +163,9 @@ const bgAnimation = {
         }
 
         const isDark = document.documentElement.classList.contains('dark');
-        let r = 100, g = 116, b = 139; // Slate
-        if (isDark) { r = 245; g = 158; b = 11; } // Amber
+        let r = 100, g = 116, b = 139;
+        if (isDark) { r = 245; g = 158; b = 11; }
 
-        // Вибір методу рендерингу
         switch (this.effectName) {
             case 'matrix': this.animateMatrix(isDark); break;
             case 'warp': this.animateWarp(isDark); break;
@@ -175,216 +176,159 @@ const bgAnimation = {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
     },
 
-    // --- MATRIX ---
+    // --- RENDERERS ---
     animateMatrix(isDark) {
         this.ctx.fillStyle = isDark ? '#0F0' : '#000';
-        this.ctx.font = '15px monospace';
+        // Opacity affects font visibility slightly or color
+        this.ctx.globalAlpha = this.config.opacity;
+        this.ctx.font = `${15 * this.config.size}px monospace`;
         for (let i = 0; i < this.cols; i++) {
             const text = String.fromCharCode(Math.random() * 128);
-            const x = i * 20;
-            const y = this.yPos[i];
+            const x = i * 20; const y = this.yPos[i];
             this.ctx.fillText(text, x, y);
             if (y > this.canvas.height && Math.random() > 0.975) this.yPos[i] = 0;
-            else this.yPos[i] += 20;
+            else this.yPos[i] += 20 * this.config.speed;
         }
+        this.ctx.globalAlpha = 1.0;
     },
-
-    // --- WARP ---
     animateWarp(isDark) {
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
+        const cx = this.canvas.width / 2; const cy = this.canvas.height / 2;
         this.ctx.fillStyle = isDark ? '#FFF' : '#333';
+        this.ctx.globalAlpha = this.config.opacity;
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
-            p.z -= 10;
-            if (p.z <= 0) {
-                p.z = this.canvas.width;
-                p.x = Math.random() * this.canvas.width;
-                p.y = Math.random() * this.canvas.height;
-            }
+            p.z -= 10 * this.config.speed;
+            if (p.z <= 0) { p.z = this.canvas.width; p.x = Math.random() * this.canvas.width; p.y = Math.random() * this.canvas.height; }
             const sx = (p.x - cx) * (this.canvas.width / p.z) + cx;
             const sy = (p.y - cy) * (this.canvas.width / p.z) + cy;
-            const size = (1 - p.z / this.canvas.width) * 4;
-            if (size > 0) {
-                this.ctx.beginPath();
-                this.ctx.arc(sx, sy, size, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
+            const size = ((1 - p.z / this.canvas.width) * 4) * this.config.size;
+            if (size > 0) { this.ctx.beginPath(); this.ctx.arc(sx, sy, size, 0, Math.PI * 2); this.ctx.fill(); }
         }
+        this.ctx.globalAlpha = 1.0;
     },
-
-    // --- DNA FLOW ---
     animateDNA(isDark) {
         const centerY = this.canvas.height / 2;
-        const amplitude = 80; 
-        
-        this.ctx.lineWidth = 2;
-        // Колір "перемичок"
-        this.ctx.strokeStyle = isDark ? `rgba(99, 102, 241, 0.3)` : `rgba(71, 85, 105, 0.3)`;
-
+        const amplitude = 80 * this.config.size;
+        this.ctx.lineWidth = 2 * this.config.size;
+        this.ctx.strokeStyle = isDark ? `rgba(99, 102, 241, ${0.3 * this.config.opacity})` : `rgba(71, 85, 105, ${0.3 * this.config.opacity})`;
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
-            p.angle += p.speed; // Обертання
-
+            p.angle += p.speed;
             const y1 = centerY + Math.sin(p.angle) * amplitude;
             const y2 = centerY + Math.sin(p.angle + Math.PI) * amplitude;
-
-            // Перемичка
-            this.ctx.beginPath();
-            this.ctx.moveTo(p.x, y1);
-            this.ctx.lineTo(p.x, y2);
-            this.ctx.stroke();
-
-            // Точки (Нуклеотиди)
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, y1, 5, 0, Math.PI * 2);
-            this.ctx.fillStyle = isDark ? '#818cf8' : '#334155'; // Indigo / Slate
-            this.ctx.fill();
-
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, y2, 5, 0, Math.PI * 2);
-            this.ctx.fillStyle = isDark ? '#c084fc' : '#475569'; // Purple / Slate
-            this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.moveTo(p.x, y1); this.ctx.lineTo(p.x, y2); this.ctx.stroke();
+            this.ctx.beginPath(); this.ctx.arc(p.x, y1, 5 * this.config.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = isDark ? `rgba(129, 140, 248, ${this.config.opacity})` : `rgba(51, 65, 85, ${this.config.opacity})`; this.ctx.fill();
+            this.ctx.beginPath(); this.ctx.arc(p.x, y2, 5 * this.config.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = isDark ? `rgba(192, 132, 252, ${this.config.opacity})` : `rgba(71, 85, 105, ${this.config.opacity})`; this.ctx.fill();
         }
     },
-
-    // --- GENERAL PARTICLES ---
     animateParticles(r, g, b, isDark) {
         const cx = this.canvas.width / 2;
         const cy = this.canvas.height / 2;
+        const interactionRadius = 150 * this.config.interaction;
 
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
 
-            // 1. ASTEROIDS & STARS
-            if (this.effectName === 'asteroids') {
+            // ... Movement Logic (Standard) ...
+            if (this.effectName === 'asteroids') { /* ... */
                 if (p.type === 'star') {
                     p.x += p.speedX; p.y += p.speedY; p.opacity -= 0.01;
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(p.x, p.y);
-                    this.ctx.lineTo(p.x - p.speedX * 4, p.y - p.speedY * 4); // Довгий хвіст
+                    this.ctx.beginPath(); this.ctx.moveTo(p.x, p.y); this.ctx.lineTo(p.x - p.speedX * 4, p.y - p.speedY * 4);
                     this.ctx.strokeStyle = isDark ? `rgba(255, 255, 255, ${p.opacity})` : `rgba(0,0,0, ${p.opacity})`;
-                    this.ctx.lineWidth = 2;
+                    this.ctx.lineWidth = 2 * this.config.size;
                     this.ctx.stroke();
-                    // Reset star
-                    if (p.x < -100 || p.y > this.canvas.height + 100 || p.opacity <= 0) {
-                        p.x = Math.random() * this.canvas.width + 300; 
-                        p.y = Math.random() * this.canvas.height * 0.5 - 200; 
-                        p.opacity = 1;
-                    }
+                    if (p.x < -100 || p.y > this.canvas.height + 100 || p.opacity <= 0) { p.x = Math.random() * this.canvas.width + 300; p.y = -50; p.opacity = 1; }
                 } else {
-                    // Астероїд
-                    p.x += p.speedX; p.y += p.speedY; p.angle += p.spinSpeed;
-                    this.ctx.save();
-                    this.ctx.translate(p.x, p.y);
-                    this.ctx.rotate(p.angle);
-                    this.ctx.font = `${p.size}px serif`;
-                    this.ctx.textAlign = 'center';
-                    this.ctx.textBaseline = 'middle';
+                    this.ctx.save(); this.ctx.translate(p.x, p.y); this.ctx.rotate(p.angle);
+                    this.ctx.font = `${p.size}px serif`; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle';
+                    this.ctx.globalAlpha = this.config.opacity;
                     this.ctx.fillText(p.icon, 0, 0);
+                    this.ctx.globalAlpha = 1.0;
                     this.ctx.restore();
-                    // Wrap edges
-                    if (p.x > this.canvas.width + 50) p.x = -50;
-                    if (p.x < -50) p.x = this.canvas.width + 50;
-                    if (p.y > this.canvas.height + 50) p.y = -50;
-                    if (p.y < -50) p.y = this.canvas.height + 50;
+                    p.x += p.speedX; p.y += p.speedY; p.angle += p.spinSpeed;
+                    if (p.x > this.canvas.width + 50) p.x = -50; if (p.x < -50) p.x = this.canvas.width + 50;
+                    if (p.y > this.canvas.height + 50) p.y = -50; if (p.y < -50) p.y = this.canvas.height + 50;
                 }
                 continue;
             }
-
-            // 2. SPIRAL
             if (this.effectName === 'spiral') {
-                p.spiralAngle += 0.005; 
-                p.radius += Math.sin(p.spiralAngle * 2) * 0.2; 
+                p.spiralAngle += 0.005 * this.config.speed;
+                p.radius += Math.sin(p.spiralAngle * 2) * 0.2;
                 const sx = cx + Math.cos(p.spiralAngle + p.angle) * p.radius;
                 const sy = cy + Math.sin(p.spiralAngle + p.angle) * p.radius;
-                
-                this.ctx.beginPath();
-                this.ctx.arc(sx, sy, p.size, 0, Math.PI * 2);
-                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                this.ctx.fill();
+                this.ctx.beginPath(); this.drawShape(sx, sy, p.size, p.shape);
+                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity * this.config.opacity})`; this.ctx.fill();
                 continue;
             }
-
-            // 3. SNOW
             if (this.effectName === 'snow') {
-                p.y += p.speedY;
-                p.x += Math.sin(p.y * 0.01) * 0.5;
+                p.y += p.speedY; p.x += Math.sin(p.y * 0.01) * 0.5;
                 if (p.y > this.canvas.height) { p.y = -10; p.x = Math.random() * this.canvas.width; }
-                
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                this.ctx.fillStyle = isDark ? `rgba(255, 255, 255, ${p.opacity})` : `rgba(150, 160, 180, ${p.opacity})`;
+                this.ctx.beginPath(); this.drawShape(p.x, p.y, p.size, 'circle');
+                this.ctx.fillStyle = isDark ? `rgba(255, 255, 255, ${p.opacity * this.config.opacity})` : `rgba(150, 160, 180, ${p.opacity * this.config.opacity})`;
                 this.ctx.fill();
                 continue;
             }
 
-            // 4. STANDARD MOVEMENT (Dino, Geometry, Particles, Embers)
-            p.x += p.speedX;
-            p.y += p.speedY;
-
-            // Wrap logic
-            if (this.effectName === 'embers') {
-                if (p.y < -20) { p.y = this.canvas.height + 20; p.x = Math.random() * this.canvas.width; }
+            // Standard Movement
+            if (this.effectName !== 'dino_world') {
+                p.x += p.speedX; p.y += p.speedY;
+                if (p.x > this.canvas.width + 50) p.x = -50; if (p.x < -50) p.x = this.canvas.width + 50;
+                if (p.y > this.canvas.height + 50) p.y = -50; if (p.y < -50) p.y = this.canvas.height + 50;
             } else {
-                if (p.x > this.canvas.width + 50) p.x = -50;
-                if (p.x < -50) p.x = this.canvas.width + 50;
-                if (p.y > this.canvas.height + 50) p.y = -50;
-                if (p.y < -50) p.y = this.canvas.height + 50;
-            }
-
-            // Dino Draw
-            if (this.effectName === 'dino_world') {
-                p.wobble += 0.02;
-                this.ctx.save();
-                this.ctx.translate(p.x, p.y + Math.sin(p.wobble)*2);
-                this.ctx.rotate(p.angle + Math.sin(p.wobble)*0.1);
-                this.ctx.font = `${p.size}px serif`;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
+                p.wobble += 0.02 * this.config.speed;
+                this.ctx.save(); this.ctx.translate(p.x, p.y + Math.sin(p.wobble)*2); this.ctx.rotate(p.angle + Math.sin(p.wobble)*0.1);
+                this.ctx.font = `${p.size}px serif`; this.ctx.textAlign = 'center'; this.ctx.textBaseline = 'middle';
+                this.ctx.globalAlpha = this.config.opacity;
                 this.ctx.fillText(p.icon, 0, 0);
+                this.ctx.globalAlpha = 1.0;
                 this.ctx.restore();
                 continue;
             }
 
-            // Geometry Draw
+            // Draw Geometry/Particles
             if (this.effectName === 'geometry') {
                 p.angle += p.spinSpeed;
-                this.ctx.save();
-                this.ctx.translate(p.x, p.y);
-                this.ctx.rotate(p.angle);
+                this.ctx.save(); this.ctx.translate(p.x, p.y); this.ctx.rotate(p.angle);
                 this.ctx.beginPath();
-                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-                this.ctx.lineWidth = 1.5;
-                if (p.shapeType === 0) this.ctx.rect(-p.size, -p.size, p.size*2, p.size*2);
-                else if (p.shapeType === 1) {
-                    this.ctx.moveTo(0, -p.size); this.ctx.lineTo(p.size, p.size); this.ctx.lineTo(-p.size, p.size); this.ctx.closePath();
-                } else this.ctx.arc(0, 0, p.size, 0, Math.PI * 2);
-                this.ctx.stroke();
-                this.ctx.restore();
-                continue;
+                this.drawShape(0, 0, p.size, p.shape);
+                this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity * this.config.opacity})`;
+                this.ctx.lineWidth = 1.5; this.ctx.stroke(); this.ctx.restore();
+            } else {
+                this.ctx.beginPath();
+                this.drawShape(p.x, p.y, p.size, p.shape);
+                this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity * this.config.opacity})`;
+                this.ctx.fill();
             }
 
-            // Standard Particles & Embers Draw
-            this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.opacity})`;
-            this.ctx.fill();
-
             // Connections
-            if (this.effectName === 'particles' && this.mouse.x != null) {
-                const dx = p.x - this.mouse.x;
-                const dy = p.y - this.mouse.y;
+            if (this.config.connect && this.effectName === 'particles' && this.mouse.x != null) {
+                const dx = p.x - this.mouse.x; const dy = p.y - this.mouse.y;
                 const d = Math.sqrt(dx*dx + dy*dy);
-                if (d < 120) {
+                if (d < interactionRadius) {
                     this.ctx.beginPath();
-                    this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${1 - d/120})`;
+                    this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${(1 - d/interactionRadius) * this.config.opacity})`;
                     this.ctx.lineWidth = 0.5;
                     this.ctx.moveTo(p.x, p.y);
                     this.ctx.lineTo(this.mouse.x, this.mouse.y);
                     this.ctx.stroke();
                 }
             }
+        }
+    },
+
+    drawShape(x, y, size, shape) {
+        if (shape === 'circle') this.ctx.arc(x, y, size, 0, Math.PI * 2);
+        else if (shape === 'square') this.ctx.rect(x - size, y - size, size * 2, size * 2);
+        else if (shape === 'triangle') {
+            this.ctx.moveTo(x, y - size); this.ctx.lineTo(x + size, y + size); this.ctx.lineTo(x - size, y + size); this.ctx.closePath();
+        } else if (shape === 'star') {
+            for (let i = 0; i < 5; i++) {
+                this.ctx.lineTo(Math.cos((18 + i * 72) / 180 * Math.PI) * size + x, -Math.sin((18 + i * 72) / 180 * Math.PI) * size + y);
+                this.ctx.lineTo(Math.cos((54 + i * 72) / 180 * Math.PI) * (size / 2) + x, -Math.sin((54 + i * 72) / 180 * Math.PI) * (size / 2) + y);
+            }
+            this.ctx.closePath();
         }
     }
 };
